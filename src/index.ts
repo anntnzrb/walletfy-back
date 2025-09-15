@@ -3,6 +3,7 @@
  * Starts the Express server and configures the listening port
  */
 
+import 'dotenv/config';
 import app from './app';
 
 /**
@@ -10,7 +11,7 @@ import app from './app';
  * The port number on which the server will listen for incoming connections
  * @type {number}
  */
-const PORT = 3030;
+const PORT = Number(process.env.PORT) || 3030;
 
 /**
  * Start the Express server
