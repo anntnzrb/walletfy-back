@@ -2,8 +2,24 @@
  * @fileoverview Event API routes configuration using Express Router
  */
 
-import { Router } from 'express';
+import {
+  Router,
+  type Request,
+  type Response,
+  type NextFunction,
+} from 'express';
 import { eventController } from './event.controller';
+
+/**
+ * Wraps async route handlers to handle promise rejections
+ */
+const asyncHandler = (
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<void>,
+) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    void fn(req, res, next).catch(next);
+  };
+};
 
 /**
  * Express router instance for event-related API endpoints
@@ -19,7 +35,12 @@ const router = Router();
  * @returns {Object} 201 - Created event object with generated ID
  * @returns {Object} 400 - Validation error
  */
-router.post('/eventos', eventController.createEvent.bind(eventController));
+router.post(
+  '/eventos',
+  asyncHandler(async (req, res, next) => {
+    await eventController.createEvent(req, res, next);
+  }),
+);
 
 /**
  * GET /eventos - Retrieve all events with optional filtering and pagination
@@ -31,7 +52,12 @@ router.post('/eventos', eventController.createEvent.bind(eventController));
  * @returns {Object} 200 - Paginated events result with metadata
  * @returns {Object} 400 - Validation error
  */
-router.get('/eventos', eventController.getAllEvents.bind(eventController));
+router.get(
+  '/eventos',
+  asyncHandler(async (req, res, next) => {
+    await eventController.getAllEvents(req, res, next);
+  }),
+);
 
 /**
  * GET /eventos/:id - Retrieve a specific event by ID
@@ -41,7 +67,12 @@ router.get('/eventos', eventController.getAllEvents.bind(eventController));
  * @returns {Object} 200 - Event object
  * @returns {Object} 404 - Event not found
  */
-router.get('/eventos/:id', eventController.getEventById.bind(eventController));
+router.get(
+  '/eventos/:id',
+  asyncHandler(async (req, res, next) => {
+    await eventController.getEventById(req, res, next);
+  }),
+);
 
 /**
  * PUT /eventos/:id - Update an existing event
@@ -53,7 +84,12 @@ router.get('/eventos/:id', eventController.getEventById.bind(eventController));
  * @returns {Object} 400 - Validation error
  * @returns {Object} 404 - Event not found
  */
-router.put('/eventos/:id', eventController.updateEvent.bind(eventController));
+router.put(
+  '/eventos/:id',
+  asyncHandler(async (req, res, next) => {
+    await eventController.updateEvent(req, res, next);
+  }),
+);
 
 /**
  * DELETE /eventos/:id - Delete an event
@@ -63,7 +99,12 @@ router.put('/eventos/:id', eventController.updateEvent.bind(eventController));
  * @returns {void} 204 - No content, deletion successful
  * @returns {Object} 404 - Event not found
  */
-router.delete('/eventos/:id', eventController.deleteEvent.bind(eventController));
+router.delete(
+  '/eventos/:id',
+  asyncHandler(async (req, res, next) => {
+    await eventController.deleteEvent(req, res, next);
+  }),
+);
 
 /**
  * Export the configured router for use in the main application

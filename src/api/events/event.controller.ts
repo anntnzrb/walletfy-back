@@ -2,7 +2,7 @@
  * @fileoverview Event controller layer for handling HTTP requests and responses
  */
 
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { eventService } from './event.service';
 import {
   CreateEventSchema,
@@ -26,7 +26,11 @@ export class EventController {
    * Body: { "nombre": "Salary", "cantidad": 5000, "fecha": "2023-01-01", "tipo": "ingreso" }
    * Response: 201 with created event object
    */
-  async createEvent(req: Request, res: Response, next: NextFunction) {
+  async createEvent(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const validatedData = CreateEventSchema.parse(req.body);
       const event = await eventService.createEvent(validatedData);
@@ -47,7 +51,11 @@ export class EventController {
    * GET /eventos?page=1&limit=10&tipo=ingreso
    * Response: 200 with paginated events result
    */
-  async getAllEvents(req: Request, res: Response, next: NextFunction) {
+  async getAllEvents(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const validatedQuery = EventQuerySchema.parse(req.query);
       const result = await eventService.getAllEvents(validatedQuery);
@@ -68,9 +76,17 @@ export class EventController {
    * GET /eventos/123e4567-e89b-12d3-a456-426614174000
    * Response: 200 with event object or 404 if not found
    */
-  async getEventById(req: Request, res: Response, next: NextFunction) {
+  async getEventById(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const { id } = req.params;
+      if (!id) {
+        res.status(400).json({ error: 'Event ID is required' });
+        return;
+      }
       const event = await eventService.getEventById(id);
 
       res.status(200).json(event);
@@ -90,9 +106,17 @@ export class EventController {
    * Body: { "cantidad": 6000 }
    * Response: 200 with updated event object or 404 if not found
    */
-  async updateEvent(req: Request, res: Response, next: NextFunction) {
+  async updateEvent(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const { id } = req.params;
+      if (!id) {
+        res.status(400).json({ error: 'Event ID is required' });
+        return;
+      }
       const validatedData = UpdateEventSchema.parse(req.body);
       const event = await eventService.updateEvent(id, validatedData);
 
@@ -112,9 +136,17 @@ export class EventController {
    * DELETE /eventos/123e4567-e89b-12d3-a456-426614174000
    * Response: 204 with no content or 404 if not found
    */
-  async deleteEvent(req: Request, res: Response, next: NextFunction) {
+  async deleteEvent(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const { id } = req.params;
+      if (!id) {
+        res.status(400).json({ error: 'Event ID is required' });
+        return;
+      }
       await eventService.deleteEvent(id);
 
       res.status(204).send();

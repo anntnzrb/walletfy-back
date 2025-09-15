@@ -2,7 +2,12 @@
  * @fileoverview Event repository layer for data access operations with in-memory storage
  */
 
-import { Event, CreateEvent, UpdateEvent, EventQuery } from './event.schema';
+import type {
+  Event,
+  CreateEvent,
+  UpdateEvent,
+  EventQuery,
+} from './event.schema';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -47,14 +52,14 @@ export class EventRepository {
    *   tipo: 'ingreso'
    * });
    */
-  async create(eventData: CreateEvent): Promise<Event> {
+  create(eventData: CreateEvent): Promise<Event> {
     const event: Event = {
       id: uuidv4(),
       ...eventData,
     };
 
     this.events.push(event);
-    return event;
+    return Promise.resolve(event);
   }
 
   /**
@@ -64,27 +69,29 @@ export class EventRepository {
    * @example
    * const result = await repository.findAll({ page: 1, limit: 10, tipo: 'ingreso' });
    */
-  async findAll(query?: EventQuery): Promise<PaginatedResult<Event>> {
+  findAll(query?: EventQuery): Promise<PaginatedResult<Event>> {
     let filteredEvents = [...this.events];
 
     if (query?.tipo) {
-      filteredEvents = filteredEvents.filter(event => event.tipo === query.tipo);
+      filteredEvents = filteredEvents.filter(
+        (event) => event.tipo === query.tipo,
+      );
     }
 
     const total = filteredEvents.length;
-    const page = query?.page || 1;
-    const limit = query?.limit || 10;
+    const page = query?.page ?? 1;
+    const limit = query?.limit ?? 10;
     const offset = (page - 1) * limit;
 
     const paginatedEvents = filteredEvents.slice(offset, offset + limit);
 
-    return {
+    return Promise.resolve({
       data: paginatedEvents,
       total,
       page,
       limit,
       totalPages: Math.ceil(total / limit),
-    };
+    });
   }
 
   /**
@@ -94,9 +101,9 @@ export class EventRepository {
    * @example
    * const event = await repository.findById('123e4567-e89b-12d3-a456-426614174000');
    */
-  async findById(id: string): Promise<Event | null> {
-    const event = this.events.find(event => event.id === id);
-    return event || null;
+  findById(id: string): Promise<Event | null> {
+    const event = this.events.find((event) => event.id === id);
+    return Promise.resolve(event ?? null);
   }
 
   /**
@@ -107,20 +114,25 @@ export class EventRepository {
    * @example
    * const updated = await repository.update('123e4567...', { cantidad: 6000 });
    */
-  async update(id: string, updateData: UpdateEvent): Promise<Event | null> {
-    const eventIndex = this.events.findIndex(event => event.id === id);
+  update(id: string, updateData: UpdateEvent): Promise<Event | null> {
+    const eventIndex = this.events.findIndex((event) => event.id === id);
 
     if (eventIndex === -1) {
-      return null;
+      return Promise.resolve(null);
+    }
+
+    const existingEvent = this.events[eventIndex];
+    if (!existingEvent) {
+      return Promise.resolve(null);
     }
 
     const updatedEvent: Event = {
-      ...this.events[eventIndex],
+      ...existingEvent,
       ...updateData,
     };
 
     this.events[eventIndex] = updatedEvent;
-    return updatedEvent;
+    return Promise.resolve(updatedEvent);
   }
 
   /**
@@ -130,15 +142,15 @@ export class EventRepository {
    * @example
    * const deleted = await repository.delete('123e4567-e89b-12d3-a456-426614174000');
    */
-  async delete(id: string): Promise<boolean> {
-    const eventIndex = this.events.findIndex(event => event.id === id);
+  delete(id: string): Promise<boolean> {
+    const eventIndex = this.events.findIndex((event) => event.id === id);
 
     if (eventIndex === -1) {
-      return false;
+      return Promise.resolve(false);
     }
 
     this.events.splice(eventIndex, 1);
-    return true;
+    return Promise.resolve(true);
   }
 }
 

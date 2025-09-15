@@ -2,8 +2,13 @@
  * @fileoverview Event management service layer for handling business logic and validation
  */
 
-import { eventRepository } from './event.repository';
-import { Event, CreateEvent, UpdateEvent, EventQuery } from './event.schema';
+import { eventRepository, type PaginatedResult } from './event.repository';
+import type {
+  Event,
+  CreateEvent,
+  UpdateEvent,
+  EventQuery,
+} from './event.schema';
 import { NotFoundError } from '../../core/middleware/errorHandler';
 
 /**
@@ -34,7 +39,7 @@ export class EventService {
    * @example
    * const events = await eventService.getAllEvents({ page: 1, limit: 10, tipo: 'ingreso' });
    */
-  async getAllEvents(query?: EventQuery) {
+  async getAllEvents(query?: EventQuery): Promise<PaginatedResult<Event>> {
     return await eventRepository.findAll(query);
   }
 

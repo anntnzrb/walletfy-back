@@ -3,7 +3,7 @@
  * Configures middleware, routes, and error handling for the RESTful API server
  */
 
-import express from 'express';
+import express, { type Request, type Response } from 'express';
 import { logger } from './core/middleware/logger';
 import { errorHandler } from './core/middleware/errorHandler';
 import eventRoutes from './api/events/event.routes';
@@ -43,11 +43,11 @@ app.use(logger);
  * GET /health
  * Response: { "status": "ok", "uptime": "120s" }
  */
-app.get('/health', (req, res) => {
+app.get('/health', (req: Request, res: Response): void => {
   const uptime = Math.floor((Date.now() - startTime) / 1000);
   res.status(200).json({
     status: 'ok',
-    uptime: `${uptime}s`,
+    uptime: `${uptime.toString()}s`,
   });
 });
 
