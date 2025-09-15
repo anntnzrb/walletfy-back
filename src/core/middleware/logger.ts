@@ -5,7 +5,8 @@
  * with detailed information including timestamp, HTTP method, URL, and query parameters.
  */
 
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
+import { logger as appLogger } from '../utils/logger';
 
 /**
  * Express middleware function that logs incoming HTTP requests with detailed information
@@ -30,7 +31,11 @@ import { Request, Response, NextFunction } from 'express';
  * app.use(logger);
  * ```
  */
-export const logger = (req: Request, res: Response, next: NextFunction): void => {
+export const logger = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void => {
   /** @type {string} ISO timestamp string representing when the request was received */
   const timestamp = new Date().toISOString();
 
@@ -40,10 +45,15 @@ export const logger = (req: Request, res: Response, next: NextFunction): void =>
   /** @type {string} Request URL path */
   const url = req.url;
 
-  /** @type {any} Query parameters object from the request */
-  const query = req.query;
+  /** Query parameters object from the request */
+  const query = req.query as Record<string, unknown>;
 
-  console.log(`[${timestamp}] ${method} ${url} - Query:`, JSON.stringify(query));
+  appLogger.info(`${method} ${url}`, {
+    timestamp,
+    query,
+    userAgent: req.get('User-Agent'),
+    ip: req.ip,
+  });
 
   next();
 };

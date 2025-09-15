@@ -7,8 +7,9 @@
  * - Proper HTTP status code mapping and JSON error responses
  */
 
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
+import { logger } from '../utils/logger';
 
 /**
  * Extended Error interface that includes additional properties for application-specific errors
@@ -139,7 +140,7 @@ export const errorHandler = (
   error: Error | AppError | ZodError,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction,
 ): void => {
   /** @type {number} Default HTTP status code for unhandled errors */
   let statusCode = 500;
@@ -153,7 +154,7 @@ export const errorHandler = (
     message = 'Validation error';
 
     /** @type {Array<{path: string, message: string}>} Formatted validation errors */
-    const errors = error.errors.map(err => ({
+    const errors = error.errors.map((err) => ({
       path: err.path.join('.'),
       message: err.message,
     }));
@@ -172,8 +173,12 @@ export const errorHandler = (
   }
 
   // Log error details for debugging and monitoring
-  console.error(`[ERROR] ${new Date().toISOString()} - ${error.name}: ${error.message}`);
-  console.error(error.stack);
+  logger.error(`${error.name}: ${error.message}`, {
+    stack: error.stack,
+    statusCode,
+    url: req.url,
+    method: req.method,
+  });
 
   // Send standardized error response
   res.status(statusCode).json({

@@ -5,6 +5,7 @@
 
 import 'dotenv/config';
 import app from './app';
+import { logger } from './core/utils/logger';
 
 /**
  * Server port configuration
@@ -26,7 +27,10 @@ const PORT = Number(process.env.PORT) || 3030;
  * API endpoints: http://localhost:3030/api/eventos
  */
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📊 Health endpoint available at http://localhost:${PORT}/health`);
-  console.log(`🔧 API endpoints available at http://localhost:${PORT}/api/eventos`);
+  logger.info('Server started successfully', {
+    port: PORT,
+    serverUrl: `http://localhost:${PORT.toString()}`,
+    healthEndpoint: `http://localhost:${PORT.toString()}/health`,
+    apiEndpoint: `http://localhost:${PORT.toString()}/api/eventos`,
+  });
 });
