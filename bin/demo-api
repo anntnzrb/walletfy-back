@@ -1,0 +1,299 @@
+#!/bin/sh
+
+# =============================================================================
+# Walletfy Backend API Demo Recording
+# POSIX-compliant demo script with fancy UI using gum
+# Records real API interactions with curl commands and JSON responses
+# =============================================================================
+
+set -e
+
+# Colors and styling constants
+RED=196
+GREEN=46
+BLUE=39
+YELLOW=220
+PURPLE=129
+GRAY=240
+
+# Check if command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Logging functions
+log_info() {
+    if command_exists gum; then
+        gum log --level info "$1"
+    else
+        printf "[INFO] %s\n" "$1"
+    fi
+}
+
+log_error() {
+    if command_exists gum; then
+        gum log --level error "$1"
+    else
+        printf "[ERROR] %s\n" "$1" >&2
+    fi
+}
+
+log_success() {
+    if command_exists gum; then
+        gum log --level info "✅ $1"
+    else
+        printf "[SUCCESS] ✅ %s\n" "$1"
+    fi
+}
+
+log_fail() {
+    if command_exists gum; then
+        gum log --level error "❌ $1"
+    else
+        printf "[FAIL] ❌ %s\n" "$1" >&2
+    fi
+}
+
+# Display fancy header
+show_header() {
+    if command_exists gum; then
+        gum style \
+            --foreground $PURPLE --border-foreground $PURPLE --border double \
+            --align center --width 60 --margin "1 2" --padding "2 4" \
+            "🎬 Walletfy API Demo Recording" \
+            "Live CRUD operations demonstration"
+    else
+        echo "=================================="
+        echo "🎬 Walletfy API Demo Recording"
+        echo "Live CRUD operations demonstration"
+        echo "=================================="
+    fi
+}
+
+# Demo API workflow with real curl commands and responses
+demo_api_workflow() {
+    demo_file="demo-output-$(date +%Y%m%d-%H%M%S).txt"
+    base_url="http://localhost:3030"
+    created_id=""
+
+    if command_exists gum; then
+        gum style --foreground $GREEN --bold "🎬 API Demo Recording Session"
+        gum style --foreground $GRAY "Output will be saved to: $demo_file"
+    else
+        echo "🎬 API Demo Recording Session"
+        echo "Output will be saved to: $demo_file"
+    fi
+
+    # Start recording to file
+    {
+        echo "=================================="
+        echo "🎬 Walletfy Backend API Demo"
+        echo "Recorded: $(date)"
+        echo "=================================="
+        echo ""
+    } > "$demo_file"
+
+    # Start server in background
+    log_info "Starting development server..."
+    npm run dev >/dev/null 2>&1 &
+    SERVER_PID=$!
+
+    # Wait for server to start
+    sleep 3
+
+    demo_step() {
+        step_name="$1"
+        curl_cmd="$2"
+        description="$3"
+
+        if command_exists gum; then
+            gum style --foreground $BLUE --bold "📋 $step_name"
+        else
+            echo "📋 $step_name"
+        fi
+
+        echo "Description: $description"
+        echo ""
+        echo "Command:"
+        if command_exists gum; then
+            echo "$curl_cmd" | gum format -t code
+        else
+            echo "  $curl_cmd"
+        fi
+        echo ""
+
+        # Record to file
+        {
+            echo "=== $step_name ==="
+            echo "Description: $description"
+            echo "Command: $curl_cmd"
+            echo "Response:"
+        } >> "$demo_file"
+
+        # Execute and capture response
+        response=$(eval "$curl_cmd" 2>/dev/null)
+        status=$?
+
+        echo "Response:"
+        # Try different formatting options in order of preference
+        if [ -n "$response" ]; then
+            if command_exists jq; then
+                # Try to pretty-print with jq if it's JSON
+                echo "$response" | jq . 2>/dev/null || {
+                    # If jq fails, try gum formatting
+                    if command_exists gum; then
+                        echo "$response" | gum format -t code 2>/dev/null || echo "$response"
+                    else
+                        echo "$response"
+                    fi
+                }
+            elif command_exists gum; then
+                # Try gum without JSON formatting first, then fallback to plain
+                echo "$response" | gum format -t code 2>/dev/null || echo "$response"
+            else
+                # Plain output
+                echo "$response"
+            fi
+        else
+            echo "(no response)"
+        fi
+
+        # Save response to file
+        echo "$response" >> "$demo_file"
+        echo "" >> "$demo_file"
+
+        echo ""
+        if [ $status -eq 0 ]; then
+            log_success "$step_name completed"
+        else
+            log_fail "$step_name failed"
+        fi
+        echo ""
+
+        # Extract ID if this was a creation step
+        if echo "$response" | grep -q '"id"'; then
+            created_id=$(echo "$response" | sed -n 's/.*"id":"\([^"]*\)".*/\1/p')
+        fi
+
+        # Wait a moment between steps for readability
+        sleep 1
+    }
+
+    # Demo workflow steps
+    demo_step "Health Check" \
+        "curl -s $base_url/health" \
+        "Verify server is running and responsive"
+
+    demo_step "Initial State - List All Events" \
+        "curl -s $base_url/api/eventos" \
+        "Check initial state - should be empty or show existing events"
+
+    demo_step "Create New Event" \
+        "curl -s -X POST -H 'Content-Type: application/json' -d '{\"nombre\":\"Demo Event\",\"cantidad\":250.50,\"fecha\":\"2024-01-15\",\"tipo\":\"ingreso\",\"descripcion\":\"Demo transaction for testing\"}' $base_url/api/eventos" \
+        "Create a new financial event (income type)"
+
+    if [ -n "$created_id" ]; then
+        demo_step "List All Events (After Creation)" \
+            "curl -s $base_url/api/eventos" \
+            "Verify the new event appears in the list"
+
+        demo_step "Get Specific Event by ID" \
+            "curl -s $base_url/api/eventos/$created_id" \
+            "Retrieve the specific event we just created"
+
+        demo_step "Update Event" \
+            "curl -s -X PUT -H 'Content-Type: application/json' -d '{\"nombre\":\"Updated Demo Event\",\"cantidad\":300.75,\"descripcion\":\"Updated demo transaction\"}' $base_url/api/eventos/$created_id" \
+            "Update the event with new information"
+
+        demo_step "Verify Update" \
+            "curl -s $base_url/api/eventos/$created_id" \
+            "Check that the event was successfully updated"
+
+        demo_step "Delete Event" \
+            "curl -s -X DELETE -w 'HTTP Status: %{http_code}' $base_url/api/eventos/$created_id" \
+            "Delete the demo event"
+
+        demo_step "Verify Deletion" \
+            "curl -s $base_url/api/eventos" \
+            "Confirm the event was removed from the list"
+    else
+        log_error "Could not extract created event ID, skipping individual event operations"
+    fi
+
+    # Test error handling
+    demo_step "Test Validation Error" \
+        "curl -s -X POST -H 'Content-Type: application/json' -d '{}' -w '\\nHTTP Status: %{http_code}' $base_url/api/eventos" \
+        "Test API validation with invalid data"
+
+    demo_step "Test Not Found Error" \
+        "curl -s -w '\\nHTTP Status: %{http_code}' $base_url/api/eventos/invalid-id" \
+        "Test 404 error with non-existent event ID"
+
+    # Cleanup server
+    if [ -n "$SERVER_PID" ]; then
+        kill $SERVER_PID 2>/dev/null || true
+        wait $SERVER_PID 2>/dev/null || true
+        log_info "Server stopped"
+    fi
+
+    # Final summary
+    {
+        echo "=================================="
+        echo "Demo completed: $(date)"
+        echo "=================================="
+    } >> "$demo_file"
+
+    if command_exists gum; then
+        gum style \
+            --foreground $GREEN --border-foreground $GREEN --border rounded \
+            --align center --width 60 --margin "1 2" --padding "1 2" \
+            "🎉 Demo Recording Complete!" \
+            "Full transcript saved to: $demo_file"
+    else
+        echo "=================================="
+        echo "🎉 Demo Recording Complete!"
+        echo "Full transcript saved to: $demo_file"
+        echo "=================================="
+    fi
+}
+
+# Confirm before running
+confirm_run() {
+    if command_exists gum; then
+        if ! gum confirm "Start API demo recording? This will start/stop the server."; then
+            log_info "Demo cancelled"
+            exit 0
+        fi
+    else
+        printf "Start API demo recording? This will start/stop the server. [y/N]: "
+        read -r answer
+        case "$answer" in
+            [Yy]|[Yy][Ee][Ss])
+                ;;
+            *)
+                log_info "Demo cancelled"
+                exit 0
+                ;;
+        esac
+    fi
+}
+
+# Main execution
+main() {
+    show_header
+
+    # Check if gum is available
+    if ! command_exists gum; then
+        log_info "💡 For enhanced UI, install gum: https://github.com/charmbracelet/gum"
+        echo ""
+    fi
+
+    confirm_run
+    demo_api_workflow
+}
+
+# Trap to cleanup background processes
+trap 'if [ -n "$SERVER_PID" ]; then kill $SERVER_PID 2>/dev/null || true; fi' EXIT INT TERM
+
+# Run main function
+main "$@"
