@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to AI Agents when working with code in this repository.
 
 ## Essential Commands
 
@@ -108,7 +108,7 @@ if (!id) {
 ```
 
 ### Environment Configuration
-Uses `dotenv/config` for environment variables. Port defaults to 3030 if `PORT` not set.
+Uses `dotenv/config` for environment variables.
 
 ### Health Endpoint
 `GET /health` returns server status and uptime in seconds.
