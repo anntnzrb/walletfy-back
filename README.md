@@ -20,31 +20,7 @@ cp .env.example .env # populate MONGODB_URI and DB_NAME
 npm run dev
 ```
 
-### Scripts
-```bash
-npm run lint         # ESLint
-npm run lint:fix     # ESLint with --fix
-npm run format       # Prettier write
-npm run format:check # Prettier check
-npm run build        # TypeScript build
-npm test             # Jest integration/unit suite (uses live MongoDB)
-```
-
 > Tests connect to the MongoDB URI in `.env` and truncate the `events` collection before/after each run.
-
-### API
-- Health: `GET /health`
-- Events: `POST/GET/PUT/DELETE /api/v1/eventos`
-
-#### Query Parameters
-- `GET /api/v1/eventos?tipo=ingreso&page=1&limit=10&sortBy=cantidad&sortOrder=desc`
-  - `tipo`: optional filter (`ingreso`/`egreso`)
-  - `page` / `limit`: pagination controls
-  - `sortBy`: one of `nombre`, `cantidad`, `fecha`, `tipo`
-  - `sortOrder`: `asc` (default) or `desc`
-
-### Continuous Integration
-GitHub Actions workflow (`.github/workflows/ci.yml`) runs lint, format, build, and tests on push/PR. 
 
 ## License
 GPL-3.0-or-later — see `COPYING`
