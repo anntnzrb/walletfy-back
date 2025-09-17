@@ -39,6 +39,11 @@ describe('Eventos API', () => {
     await disconnectMongo();
   });
 
+  it('reports healthy status', async () => {
+    const response = await request(app).get('/health').expect(200);
+    expect(response.body.status).toBe('ok');
+  });
+
   it('performs full CRUD lifecycle', async () => {
     const createResponse = await request(app)
       .post(EVENT_ENDPOINT)

@@ -4,7 +4,11 @@
 
 import type { Request, Response } from 'express';
 import { ZodError, type ZodIssue } from 'zod';
-import { errorHandler, NotFoundError } from '../src/core/middleware/errorHandler';
+import {
+  errorHandler,
+  NotFoundError,
+  ValidationError,
+} from '../src/core/middleware/errorHandler';
 import { logger } from '../src/core/utils/logger';
 
 describe('errorHandler middleware', () => {
@@ -58,6 +62,17 @@ describe('errorHandler middleware', () => {
 
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith({ error: 'Event not found' });
+    expect(logSpy).toHaveBeenCalled();
+  });
+
+  it('handles custom ValidationError instances', () => {
+    const { req, res, logSpy } = createMocks();
+    const validationError = new ValidationError('bad payload');
+
+    errorHandler(validationError, req, res, jest.fn());
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ error: 'bad payload' });
     expect(logSpy).toHaveBeenCalled();
   });
 

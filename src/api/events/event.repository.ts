@@ -55,11 +55,10 @@ const eventSchema = new Schema<Event>(
 );
 
 const resolveModel = (): Model<Event> => {
-  if (mongoose.models.Event) {
-    return mongoose.models.Event as Model<Event>;
-  }
-
-  return mongoose.model<Event>('Event', eventSchema);
+  return (
+    (mongoose.models.Event as Model<Event> | undefined) ??
+    mongoose.model<Event>('Event', eventSchema)
+  );
 };
 
 /**

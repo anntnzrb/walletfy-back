@@ -6,8 +6,6 @@
 import mongoose from 'mongoose';
 import { logger } from '../utils/logger';
 
-const { MONGODB_URI, DB_NAME } = process.env;
-
 /** mongoose ready state representing an established connection */
 const READY_STATE_CONNECTED = mongoose.STATES.connected;
 /** mongoose ready state representing a closed connection */
@@ -18,11 +16,13 @@ const READY_STATE_DISCONNECTED = mongoose.STATES.disconnected;
  * @throws {Error} When the URI is not configured
  */
 const resolveMongoUri = (): string => {
-  if (!MONGODB_URI) {
+  const uri = process.env.MONGODB_URI;
+
+  if (!uri) {
     throw new Error('Missing MONGODB_URI environment variable');
   }
 
-  return MONGODB_URI;
+  return uri;
 };
 
 /**
@@ -36,14 +36,15 @@ export const connectMongo = async (): Promise<void> => {
   }
 
   const uri = resolveMongoUri();
+  const dbName = process.env.DB_NAME ?? 'walletfy-back';
 
   try {
     await mongoose.connect(uri, {
-      dbName: DB_NAME ?? 'walletfy-back',
+      dbName,
     });
 
     logger.info('Connected to MongoDB', {
-      dbName: DB_NAME ?? 'walletfy-back',
+      dbName,
     });
   } catch (error) {
     logger.error('Failed to connect to MongoDB', {
