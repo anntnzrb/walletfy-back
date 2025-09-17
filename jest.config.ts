@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Jest configuration for running TypeScript test suites
+ */
+
 import type { Config } from 'jest';
 
 const config: Config = {

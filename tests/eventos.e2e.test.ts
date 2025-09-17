@@ -1,3 +1,7 @@
+/**
+ * @fileoverview End-to-end tests for the Eventos API hitting the live MongoDB instance
+ */
+
 import 'dotenv/config';
 import request from 'supertest';
 import mongoose from 'mongoose';
@@ -6,6 +10,7 @@ import { connectMongo, disconnectMongo } from '../src/core/database/mongoose';
 
 const EVENT_ENDPOINT = '/api/v1/eventos';
 
+/** Sample event payload reused across CRUD assertions */
 const sampleEvent = {
   nombre: 'Test Event',
   cantidad: 123.45,
