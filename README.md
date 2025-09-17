@@ -38,3 +38,6 @@ npm test             # Jest integration/unit suite (uses live MongoDB)
 
 ### Continuous Integration
 GitHub Actions workflow (`.github/workflows/ci.yml`) runs lint, format, build, and tests on push/PR. 
+
+## License
+GPL-3.0-or-later — see `COPYING`
