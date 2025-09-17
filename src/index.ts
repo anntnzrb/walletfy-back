@@ -9,8 +9,15 @@ import app from './app';
 import { logger } from './core/utils/logger';
 import { connectMongo, disconnectMongo } from './core/database/mongoose';
 
+/**
+ * Resolved HTTP port for the Express server (defaults to 3030 when unset)
+ */
 const PORT = Number(process.env.PORT) || 3030;
 
+/**
+ * Boots the HTTP server after establishing the MongoDB connection and
+ * registers lifecycle handlers for graceful shutdown and fatal errors.
+ */
 const startServer = async (): Promise<void> => {
   try {
     await connectMongo();
@@ -24,6 +31,10 @@ const startServer = async (): Promise<void> => {
       });
     });
 
+    /**
+     * Handles unrecoverable server errors by logging details, closing
+     * database resources, and exiting the process.
+     */
     const handleServerError = async (
       error: NodeJS.ErrnoException,
     ): Promise<void> => {
@@ -48,6 +59,9 @@ const startServer = async (): Promise<void> => {
       void handleServerError(error as NodeJS.ErrnoException);
     });
 
+    /**
+     * Performs graceful shutdown when receiving termination signals.
+     */
     const shutdown = async (): Promise<void> => {
       logger.info('Shutting down server');
 
