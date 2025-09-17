@@ -17,6 +17,7 @@ npm run lint         # Run ESLint on all TypeScript files
 npm run lint:fix     # Run ESLint with auto-fix enabled
 npm run format       # Format code with Prettier
 npm run format:check # Check if code is properly formatted
+npm test             # Execute Jest end-to-end tests against the API
 ```
 
 ### Validation Workflow
