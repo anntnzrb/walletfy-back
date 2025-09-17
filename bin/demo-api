@@ -74,7 +74,10 @@ show_header() {
 demo_api_workflow() {
     demo_file="demo-output-$(date +%Y%m%d-%H%M%S).txt"
     base_url="http://localhost:3030"
+    events_endpoint="$base_url/api/v1/eventos"
     created_id=""
+    primary_id=""
+    secondary_id=""
 
     if command_exists gum; then
         gum style --foreground $GREEN --bold "🎬 API Demo Recording Session"
@@ -182,39 +185,61 @@ demo_api_workflow() {
     # Demo workflow steps
     demo_step "Health Check" \
         "curl -s $base_url/health" \
-        "Verify server is running and responsive"
+        "Verify server is running and database connection status is reported"
 
     demo_step "Initial State - List All Events" \
-        "curl -s $base_url/api/eventos" \
+        "curl -s $events_endpoint" \
         "Check initial state - should be empty or show existing events"
 
     demo_step "Create New Event" \
-        "curl -s -X POST -H 'Content-Type: application/json' -d '{\"nombre\":\"Demo Event\",\"cantidad\":250.50,\"fecha\":\"2024-01-15\",\"tipo\":\"ingreso\",\"descripcion\":\"Demo transaction for testing\"}' $base_url/api/eventos" \
+        "curl -s -X POST -H 'Content-Type: application/json' -d '{\"nombre\":\"Demo Event\",\"cantidad\":250.50,\"fecha\":\"2024-01-15\",\"tipo\":\"ingreso\",\"descripcion\":\"Demo transaction for testing\"}' $events_endpoint" \
         "Create a new financial event (income type)"
 
     if [ -n "$created_id" ]; then
+        primary_id="$created_id"
+
         demo_step "List All Events (After Creation)" \
-            "curl -s $base_url/api/eventos" \
+            "curl -s $events_endpoint" \
             "Verify the new event appears in the list"
 
         demo_step "Get Specific Event by ID" \
-            "curl -s $base_url/api/eventos/$created_id" \
+            "curl -s $events_endpoint/$primary_id" \
             "Retrieve the specific event we just created"
 
         demo_step "Update Event" \
-            "curl -s -X PUT -H 'Content-Type: application/json' -d '{\"nombre\":\"Updated Demo Event\",\"cantidad\":300.75,\"descripcion\":\"Updated demo transaction\"}' $base_url/api/eventos/$created_id" \
+            "curl -s -X PUT -H 'Content-Type: application/json' -d '{\"nombre\":\"Updated Demo Event\",\"cantidad\":300.75,\"descripcion\":\"Updated demo transaction\"}' $events_endpoint/$primary_id" \
             "Update the event with new information"
 
         demo_step "Verify Update" \
-            "curl -s $base_url/api/eventos/$created_id" \
+            "curl -s $events_endpoint/$primary_id" \
             "Check that the event was successfully updated"
 
+        demo_step "Create Comparison Event" \
+            "curl -s -X POST -H 'Content-Type: application/json' -d '{\"nombre\":\"Comparison Event\",\"cantidad\":999,\"fecha\":\"2024-02-10\",\"tipo\":\"ingreso\"}' $events_endpoint" \
+            "Create a second event to demonstrate sorting"
+
+        secondary_id="$created_id"
+
+        demo_step "List Events Sorted by Amount" \
+            "curl -s '$events_endpoint?sortBy=cantidad&sortOrder=desc'" \
+            "Demonstrate sorting support via query parameters"
+
+        demo_step "Filter Events by tipo=ingreso" \
+            "curl -s '$events_endpoint?tipo=ingreso'" \
+            "Show filtering via query parameters"
+
         demo_step "Delete Event" \
-            "curl -s -X DELETE -w 'HTTP Status: %{http_code}' $base_url/api/eventos/$created_id" \
-            "Delete the demo event"
+            "curl -s -X DELETE -w 'HTTP Status: %{http_code}' $events_endpoint/$primary_id" \
+            "Delete the first demo event"
+
+        if [ -n "$secondary_id" ]; then
+            demo_step "Delete Comparison Event" \
+                "curl -s -X DELETE -w 'HTTP Status: %{http_code}' $events_endpoint/$secondary_id" \
+                "Delete the comparison event"
+        fi
 
         demo_step "Verify Deletion" \
-            "curl -s $base_url/api/eventos" \
+            "curl -s $events_endpoint" \
             "Confirm the event was removed from the list"
     else
         log_error "Could not extract created event ID, skipping individual event operations"
@@ -222,11 +247,12 @@ demo_api_workflow() {
 
     # Test error handling
     demo_step "Test Validation Error" \
-        "curl -s -X POST -H 'Content-Type: application/json' -d '{}' -w '\\nHTTP Status: %{http_code}' $base_url/api/eventos" \
+        "curl -s -X POST -H 'Content-Type: application/json' -d '{}' -w '\\nHTTP Status: %{http_code}' $events_endpoint" \
         "Test API validation with invalid data"
 
+    missing_id=${primary_id:-invalid-id}
     demo_step "Test Not Found Error" \
-        "curl -s -w '\\nHTTP Status: %{http_code}' $base_url/api/eventos/invalid-id" \
+        "curl -s -w '\\nHTTP Status: %{http_code}' $events_endpoint/$missing_id" \
         "Test 404 error with non-existent event ID"
 
     # Cleanup server
