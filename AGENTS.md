@@ -28,6 +28,10 @@ npm test             # Execute Jest end-to-end tests against the API
 - Test files and configuration modules must include file-level summaries explaining their purpose.
 - Keep documentation changes in the same commit as the code they describe.
 
+### Continuous Integration
+
+- GitHub Actions workflow (`.github/workflows/ci.yml`) runs linting, formatting, build, and tests with coverage on every push/PR.
+
 ### Validation Workflow
 Before committing changes, always run this sequence:
 ```bash
