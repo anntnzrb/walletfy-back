@@ -69,7 +69,7 @@ La API debe implementar los siguientes endpoints para la gestión de eventos.
   - **Código:** `200 OK` o `204 No Content`.
 
 ### 3.2. Filtrado y Paginación
-- **Descripción:** El endpoint `GET /api/v1/eventos` debe soportar parámetros en la querystring para filtrar y paginar los resultados.
+- **Descripción:** El endpoint `GET /api/v1/eventos` debe soportar parámetros en la querystring para filtrar, paginar y ordenar los resultados (`page`, `limit`, `tipo`, `sortBy`, `sortOrder`).
 - **Parámetros Soportados (Ejemplo):** `?page=1&limit=10&tipo=ingreso`.
 
 ### 3.3. Middleware de Logging
@@ -164,6 +164,6 @@ src/
 - [ ] Los parámetros de `/:id` y querystring (paginación/filtrado) están implementados.
 - [ ] La validación de datos de entrada se realiza utilizando esquemas de Zod.
 - [ ] Existe un manejador de errores centralizado (middleware).
-- [ ] El endpoint de salud `GET /health` responde correctamente.
+- [ ] El endpoint de salud `GET /health` responde correctamente e incluye el estado de la base de datos.
 - [ ] El proyecto está escrito 100% en TypeScript y utiliza el stack tecnológico definido. No se utiliza en absoluto Javascript crudo.
 - [ ] La estructura del proyecto sigue la Arquitectura en Capas y la organización de directorios especificada.

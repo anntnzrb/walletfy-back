@@ -91,18 +91,28 @@ export class EventRepository {
    * Retrieves events applying optional filters and pagination
    */
   async findAll(query?: EventQuery): Promise<PaginatedResult<Event>> {
-    const { tipo, page = 1, limit = 10 } = query ?? {};
+    const {
+      tipo,
+      page = 1,
+      limit = 10,
+      sortBy,
+      sortOrder = 'asc',
+    } = query ?? {};
     const filter: FilterQuery<Event> = tipo ? { tipo } : {};
     const offset = (page - 1) * limit;
+    const sortDirection: mongoose.SortOrder = sortOrder === 'desc' ? -1 : 1;
+    const sortCriteria: Record<string, mongoose.SortOrder> | undefined = sortBy
+      ? { [sortBy]: sortDirection }
+      : undefined;
+
+    const queryBuilder = this.model.find(filter).skip(offset).limit(limit);
+
+    if (sortCriteria) {
+      queryBuilder.sort(sortCriteria);
+    }
 
     const [data, total] = await Promise.all([
-      this.model
-        .find(filter)
-        .skip(offset)
-        .limit(limit)
-        .select({ _id: 0 })
-        .lean()
-        .exec() as Promise<Event[]>,
+      queryBuilder.select({ _id: 0 }).lean().exec() as Promise<Event[]>,
       this.model.countDocuments(filter).exec(),
     ]);
 

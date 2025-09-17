@@ -42,6 +42,7 @@ describe('Eventos API', () => {
   it('reports healthy status', async () => {
     const response = await request(app).get('/health').expect(200);
     expect(response.body.status).toBe('ok');
+    expect(response.body.dbStatus).toBe('connected');
   });
 
   it('performs full CRUD lifecycle', async () => {
@@ -87,5 +88,33 @@ describe('Eventos API', () => {
       .post(EVENT_ENDPOINT)
       .send({ ...sampleEvent, nombre: '' })
       .expect(400);
+  });
+
+  it('supports sorting via query params', async () => {
+    const first = await request(app)
+      .post(EVENT_ENDPOINT)
+      .send(sampleEvent)
+      .expect(201);
+
+    const secondPayload = {
+      ...sampleEvent,
+      nombre: 'Higher Amount',
+      cantidad: 999,
+    };
+
+    const second = await request(app)
+      .post(EVENT_ENDPOINT)
+      .send(secondPayload)
+      .expect(201);
+
+    const sorted = await request(app)
+      .get(`${EVENT_ENDPOINT}?sortBy=cantidad&sortOrder=desc`)
+      .expect(200);
+
+    expect(sorted.body.data[0].cantidad).toBe(999);
+    expect(sorted.body.total).toBe(2);
+
+    await request(app).delete(`${EVENT_ENDPOINT}/${first.body.id}`).expect(204);
+    await request(app).delete(`${EVENT_ENDPOINT}/${second.body.id}`).expect(204);
   });
 });

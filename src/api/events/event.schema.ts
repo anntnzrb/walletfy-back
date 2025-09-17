@@ -44,6 +44,8 @@ export const EventQuerySchema = z.object({
   page: z.coerce.number().min(1).default(1).optional(),
   limit: z.coerce.number().min(1).max(100).default(10).optional(),
   tipo: EventTipoEnum.optional(),
+  sortBy: z.enum(['nombre', 'cantidad', 'fecha', 'tipo']).optional(),
+  sortOrder: z.enum(['asc', 'desc']).default('asc').optional(),
 });
 
 /**
@@ -89,5 +91,7 @@ export type UpdateEvent = z.infer<typeof UpdateEventSchema>;
  * @property {number} [page] - Page number for pagination (default: 1)
  * @property {number} [limit] - Items per page (default: 10, max: 100)
  * @property {'ingreso'|'egreso'} [tipo] - Optional filter by event type
+ * @property {('nombre'|'cantidad'|'fecha'|'tipo')} [sortBy] - Optional field to sort by
+ * @property {'asc'|'desc'} [sortOrder] - Sort ordering (default asc)
  */
 export type EventQuery = z.infer<typeof EventQuerySchema>;

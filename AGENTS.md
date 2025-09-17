@@ -133,3 +133,8 @@ All event endpoints are exposed under the versioned `/api/v1` prefix
 - `GET /api/v1/eventos/:id` - Get single event
 - `PUT /api/v1/eventos/:id` - Update event
 - `DELETE /api/v1/eventos/:id` - Delete event
+
+**Querystring Support**
+- `page` / `limit` for pagination
+- `tipo` to filter by event type
+- `sortBy` (`nombre`, `cantidad`, `fecha`, `tipo`) with `sortOrder` (`asc`/`desc`)

@@ -4,6 +4,7 @@
  */
 
 import express, { type Request, type Response } from 'express';
+import mongoose from 'mongoose';
 import { logger } from './core/middleware/logger';
 import { errorHandler } from './core/middleware/errorHandler';
 import eventRoutes from './api/events/event.routes';
@@ -45,9 +46,18 @@ app.use(logger);
  */
 app.get('/health', (req: Request, res: Response): void => {
   const uptime = Math.floor((Date.now() - startTime) / 1000);
+  const statusMap: Record<number, string> = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting',
+  };
+  const dbStatus = statusMap[mongoose.connection.readyState] ?? 'unknown';
+
   res.status(200).json({
     status: 'ok',
     uptime: `${uptime.toString()}s`,
+    dbStatus,
   });
 });
 

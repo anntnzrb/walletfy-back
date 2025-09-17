@@ -36,6 +36,13 @@ npm test             # Jest integration/unit suite (uses live MongoDB)
 - Health: `GET /health`
 - Events: `POST/GET/PUT/DELETE /api/v1/eventos`
 
+#### Query Parameters
+- `GET /api/v1/eventos?tipo=ingreso&page=1&limit=10&sortBy=cantidad&sortOrder=desc`
+  - `tipo`: optional filter (`ingreso`/`egreso`)
+  - `page` / `limit`: pagination controls
+  - `sortBy`: one of `nombre`, `cantidad`, `fecha`, `tipo`
+  - `sortOrder`: `asc` (default) or `desc`
+
 ### Continuous Integration
 GitHub Actions workflow (`.github/workflows/ci.yml`) runs lint, format, build, and tests on push/PR. 
 
