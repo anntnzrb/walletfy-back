@@ -16,6 +16,9 @@ import type {
   EventQuery,
 } from './event.schema';
 
+/**
+ * Paginated result wrapper for repository queries
+ */
 export interface PaginatedResult<T> {
   data: T[];
   total: number;
@@ -24,8 +27,12 @@ export interface PaginatedResult<T> {
   totalPages: number;
 }
 
+/** Hydrated mongoose document representing an Event */
 type EventDocument = HydratedDocument<Event>;
 
+/**
+ * Mongoose schema definition mirroring the Event domain model
+ */
 const eventSchema = new Schema<Event>(
   {
     id: { type: String, required: true, unique: true },
@@ -55,13 +62,22 @@ const resolveModel = (): Model<Event> => {
   return mongoose.model<Event>('Event', eventSchema);
 };
 
+/**
+ * Repository providing CRUD operations for Event entities stored in MongoDB
+ */
 export class EventRepository {
   private readonly model: Model<Event>;
 
+  /**
+   * @param model Optional mongoose model (exposed for testing)
+   */
   constructor(model: Model<Event> = resolveModel()) {
     this.model = model;
   }
 
+  /**
+   * Persists a new event and returns the created entity with generated id
+   */
   async create(eventData: CreateEvent): Promise<Event> {
     const eventToCreate: Event = {
       id: uuidv4(),
@@ -72,6 +88,9 @@ export class EventRepository {
     return createdDoc.toObject<Event>();
   }
 
+  /**
+   * Retrieves events applying optional filters and pagination
+   */
   async findAll(query?: EventQuery): Promise<PaginatedResult<Event>> {
     const filter: FilterQuery<Event> = {};
 
@@ -103,6 +122,9 @@ export class EventRepository {
     };
   }
 
+  /**
+   * Finds an event by its UUID identifier
+   */
   async findById(id: string): Promise<Event | null> {
     const event = await this.model
       .findOne({ id })
@@ -113,6 +135,9 @@ export class EventRepository {
     return event as Event | null;
   }
 
+  /**
+   * Updates an existing event and returns the modified entity, if found
+   */
   async update(id: string, updateData: UpdateEvent): Promise<Event | null> {
     const updated = await this.model
       .findOneAndUpdate({ id }, { $set: updateData }, { new: true })
@@ -123,6 +148,9 @@ export class EventRepository {
     return updated as Event | null;
   }
 
+  /**
+   * Removes an event by id and indicates whether a document was deleted
+   */
   async delete(id: string): Promise<boolean> {
     const result = await this.model.deleteOne({ id }).exec();
     const deletedCount =
