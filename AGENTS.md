@@ -22,6 +22,12 @@ npm test             # Execute Jest end-to-end tests against the API
 
 > **Note:** The Jest suite connects to the live MongoDB instance defined in `.env` and truncates the `events` collection before/after each run. Re-seed data manually if you rely on persisted fixtures.
 
+### Documentation Expectations
+
+- Every exported symbol and helper should carry clear JSDoc or equivalent inline documentation.
+- Test files and configuration modules must include file-level summaries explaining their purpose.
+- Keep documentation changes in the same commit as the code they describe.
+
 ### Validation Workflow
 Before committing changes, always run this sequence:
 ```bash
