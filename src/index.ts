@@ -5,6 +5,7 @@
 
 import 'dotenv/config';
 import type { Server } from 'http';
+import { promisify } from 'util';
 import app from './app';
 import { logger } from './core/utils/logger';
 import { connectMongo, disconnectMongo } from './core/database/mongoose';
@@ -65,11 +66,8 @@ const startServer = async (): Promise<void> => {
     const shutdown = async (): Promise<void> => {
       logger.info('Shutting down server');
 
-      await new Promise<void>((resolve) => {
-        server.close(() => {
-          resolve();
-        });
-      });
+      const closeServer = promisify(server.close.bind(server));
+      await closeServer();
 
       await disconnectMongo();
       process.exit(0);

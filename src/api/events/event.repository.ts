@@ -92,14 +92,8 @@ export class EventRepository {
    * Retrieves events applying optional filters and pagination
    */
   async findAll(query?: EventQuery): Promise<PaginatedResult<Event>> {
-    const filter: FilterQuery<Event> = {};
-
-    if (query?.tipo) {
-      filter.tipo = query.tipo;
-    }
-
-    const page = query?.page ?? 1;
-    const limit = query?.limit ?? 10;
+    const { tipo, page = 1, limit = 10 } = query ?? {};
+    const filter: FilterQuery<Event> = tipo ? { tipo } : {};
     const offset = (page - 1) * limit;
 
     const [data, total] = await Promise.all([

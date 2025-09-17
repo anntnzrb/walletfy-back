@@ -16,6 +16,42 @@ import {
  */
 export class EventController {
   /**
+   * Wraps controller logic with shared try/catch forwarding to Express next()
+   */
+  private async execute(
+    next: NextFunction,
+    action: () => Promise<void>,
+  ): Promise<void> {
+    try {
+      await action();
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Validates the presence of `req.params.id` before executing the provided action.
+   * Sends a 400 response when the identifier is missing.
+   */
+  private async withEventId(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+    action: (id: string) => Promise<void>,
+  ): Promise<void> {
+    const { id } = req.params;
+
+    if (!id) {
+      res.status(400).json({ error: 'Event ID is required' });
+      return;
+    }
+
+    await this.execute(next, async () => {
+      await action(id);
+    });
+  }
+
+  /**
    * Creates a new event from HTTP POST request
    * @param {Request} req - Express request object containing event data in body
    * @param {Response} res - Express response object
@@ -31,14 +67,12 @@ export class EventController {
     res: Response,
     next: NextFunction,
   ): Promise<void> {
-    try {
+    await this.execute(next, async () => {
       const validatedData = CreateEventSchema.parse(req.body);
       const event = await eventService.createEvent(validatedData);
 
       res.status(201).json(event);
-    } catch (error) {
-      next(error);
-    }
+    });
   }
 
   /**
@@ -56,14 +90,12 @@ export class EventController {
     res: Response,
     next: NextFunction,
   ): Promise<void> {
-    try {
+    await this.execute(next, async () => {
       const validatedQuery = EventQuerySchema.parse(req.query);
       const result = await eventService.getAllEvents(validatedQuery);
 
       res.status(200).json(result);
-    } catch (error) {
-      next(error);
-    }
+    });
   }
 
   /**
@@ -81,18 +113,11 @@ export class EventController {
     res: Response,
     next: NextFunction,
   ): Promise<void> {
-    try {
-      const { id } = req.params;
-      if (!id) {
-        res.status(400).json({ error: 'Event ID is required' });
-        return;
-      }
+    await this.withEventId(req, res, next, async (id) => {
       const event = await eventService.getEventById(id);
 
       res.status(200).json(event);
-    } catch (error) {
-      next(error);
-    }
+    });
   }
 
   /**
@@ -111,19 +136,12 @@ export class EventController {
     res: Response,
     next: NextFunction,
   ): Promise<void> {
-    try {
-      const { id } = req.params;
-      if (!id) {
-        res.status(400).json({ error: 'Event ID is required' });
-        return;
-      }
+    await this.withEventId(req, res, next, async (id) => {
       const validatedData = UpdateEventSchema.parse(req.body);
       const event = await eventService.updateEvent(id, validatedData);
 
       res.status(200).json(event);
-    } catch (error) {
-      next(error);
-    }
+    });
   }
 
   /**
@@ -141,18 +159,11 @@ export class EventController {
     res: Response,
     next: NextFunction,
   ): Promise<void> {
-    try {
-      const { id } = req.params;
-      if (!id) {
-        res.status(400).json({ error: 'Event ID is required' });
-        return;
-      }
+    await this.withEventId(req, res, next, async (id) => {
       await eventService.deleteEvent(id);
 
       res.status(204).send();
-    } catch (error) {
-      next(error);
-    }
+    });
   }
 }
 
