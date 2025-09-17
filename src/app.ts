@@ -53,9 +53,9 @@ app.get('/health', (req: Request, res: Response): void => {
 
 /**
  * Configure API routes
- * Mounts event management routes under /api prefix
+ * Mount event management routes under versioned /api/v1 prefix
  */
-app.use('/api', eventRoutes);
+app.use('/api/v1', eventRoutes);
 
 /**
  * Configure global error handling middleware

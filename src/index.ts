@@ -20,8 +20,32 @@ const startServer = async (): Promise<void> => {
         port: PORT,
         serverUrl: `http://localhost:${PORT.toString()}`,
         healthEndpoint: `http://localhost:${PORT.toString()}/health`,
-        apiEndpoint: `http://localhost:${PORT.toString()}/api/eventos`,
+        apiEndpoint: `http://localhost:${PORT.toString()}/api/v1/eventos`,
       });
+    });
+
+    const handleServerError = async (
+      error: NodeJS.ErrnoException,
+    ): Promise<void> => {
+      logger.error('Server encountered an error', {
+        code: error.code,
+        message: error.message,
+      });
+
+      await disconnectMongo().catch((disconnectError: unknown) => {
+        logger.error('Failed to disconnect from MongoDB after server error', {
+          error:
+            disconnectError instanceof Error
+              ? disconnectError.message
+              : 'Unknown error',
+        });
+      });
+
+      process.exit(1);
+    };
+
+    server.on('error', (error) => {
+      void handleServerError(error as NodeJS.ErrnoException);
     });
 
     const shutdown = async (): Promise<void> => {
@@ -47,6 +71,16 @@ const startServer = async (): Promise<void> => {
     logger.error('Failed to start server', {
       error: error instanceof Error ? error.message : 'Unknown error',
     });
+
+    await disconnectMongo().catch((disconnectError: unknown) => {
+      logger.error('Failed to disconnect from MongoDB after startup failure', {
+        error:
+          disconnectError instanceof Error
+            ? disconnectError.message
+            : 'Unknown error',
+      });
+    });
+
     process.exit(1);
   }
 };

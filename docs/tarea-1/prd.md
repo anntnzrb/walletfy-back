@@ -29,7 +29,7 @@ La API debe implementar los siguientes endpoints para la gestión de eventos.
 
 #### 1. Crear un nuevo Evento
 - **Método:** `POST`
-- **Endpoint:** `/api/eventos`
+- **Endpoint:** `/api/v1/eventos`
 - **Descripción:** Crea un nuevo recurso de tipo evento.
 - **Request Body:** Un objeto JSON con los atributos del evento (sin `id`).
 - **Respuesta Exitosa:**
@@ -38,7 +38,7 @@ La API debe implementar los siguientes endpoints para la gestión de eventos.
 
 #### 2. Listar todos los Eventos
 - **Método:** `GET`
-- **Endpoint:** `/api/eventos`
+- **Endpoint:** `/api/v1/eventos`
 - **Descripción:** Devuelve una lista de todos los eventos.
 - **Respuesta Exitosa:**
   - **Código:** `200 OK`
@@ -46,7 +46,7 @@ La API debe implementar los siguientes endpoints para la gestión de eventos.
 
 #### 3. Obtener un Evento por ID
 - **Método:** `GET`
-- **Endpoint:** `/api/eventos/:id`
+- **Endpoint:** `/api/v1/eventos/:id`
 - **Descripción:** Devuelve un evento específico identificado por su `id`.
 - **Respuesta Exitosa:**
   - **Código:** `200 OK`
@@ -54,7 +54,7 @@ La API debe implementar los siguientes endpoints para la gestión de eventos.
 
 #### 4. Actualizar un Evento
 - **Método:** `PUT`
-- **Endpoint:** `/api/eventos/:id`
+- **Endpoint:** `/api/v1/eventos/:id`
 - **Descripción:** Actualiza un evento existente.
 - **Request Body:** Un objeto JSON con los datos actualizados del evento.
 - **Respuesta Exitosa:**
@@ -63,13 +63,13 @@ La API debe implementar los siguientes endpoints para la gestión de eventos.
 
 #### 5. Eliminar un Evento
 - **Método:** `DELETE`
-- **Endpoint:** `/api/eventos/:id`
+- **Endpoint:** `/api/v1/eventos/:id`
 - **Descripción:** Elimina un evento específico.
 - **Respuesta Exitosa:**
   - **Código:** `200 OK` o `204 No Content`.
 
 ### 3.2. Filtrado y Paginación
-- **Descripción:** El endpoint `GET /api/eventos` debe soportar parámetros en la querystring para filtrar y paginar los resultados.
+- **Descripción:** El endpoint `GET /api/v1/eventos` debe soportar parámetros en la querystring para filtrar y paginar los resultados.
 - **Parámetros Soportados (Ejemplo):** `?page=1&limit=10&tipo=ingreso`.
 
 ### 3.3. Middleware de Logging
@@ -144,7 +144,7 @@ src/
 ├── api/
 │   └── events/
 │       ├── event.controller.ts # Lógica del controlador para eventos
-│       ├── event.routes.ts     # Definición de rutas (/api/eventos)
+│       ├── event.routes.ts     # Definición de rutas (/api/v1/eventos)
 │       ├── event.repository.ts # Lógica de acceso a datos (array/JSON)
 │       ├── event.service.ts    # Lógica de negocio para eventos
 │       └── event.schema.ts     # Esquemas de Zod para validación de eventos

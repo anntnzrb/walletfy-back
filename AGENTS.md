@@ -114,9 +114,9 @@ Uses `dotenv/config` for environment variables.
 `GET /health` returns server status and uptime in seconds.
 
 ### API Routing
-All event endpoints are mounted under `/api` prefix:
-- `POST /api/eventos` - Create event
-- `GET /api/eventos` - List events (with pagination/filtering)
-- `GET /api/eventos/:id` - Get single event
-- `PUT /api/eventos/:id` - Update event
-- `DELETE /api/eventos/:id` - Delete event
+All event endpoints are exposed under the versioned `/api/v1` prefix
+- `POST /api/v1/eventos` - Create event
+- `GET /api/v1/eventos` - List events (with pagination/filtering)
+- `GET /api/v1/eventos/:id` - Get single event
+- `PUT /api/v1/eventos/:id` - Update event
+- `DELETE /api/v1/eventos/:id` - Delete event
