@@ -5,6 +5,16 @@
     "module": "CommonJS",
     "rootDir": "./src",
     "outDir": "./dist",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@controllers/*": ["src/controllers/*"],
+      "@models/*": ["src/models/*"],
+      "@routes/*": ["src/routes/*"],
+      "@validators/*": ["src/validators/*"],
+      "@views/*": ["src/views/*"],
+      "@core/*": ["src/core/*"]
+    },
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,

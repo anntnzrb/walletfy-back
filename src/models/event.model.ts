@@ -14,7 +14,7 @@ import type {
   CreateEvent,
   UpdateEvent,
   EventQuery,
-} from '../validators/event.validator';
+} from '@validators/event.validator';
 
 /**
  * Paginated result wrapper for model queries

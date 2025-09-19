@@ -2,6 +2,10 @@
 
 Walletfy is a TypeScript/Express API for managing financial events (`ingreso`/`egreso`) with MongoDB persistence. The project follows a classic MVC structure—controllers handle HTTP flow, models encapsulate persistence logic, and views shape JSON payloads—while enforcing strict typing and validation through Zod.
 
+## Import Aliases
+
+All source files use path aliases configured in `tsconfig.json` (`@/`, `@models/`, etc.) to avoid deep relative imports. ESLint blocks `../` style imports—stick to the aliases when adding new modules.
+
 ## Getting Started
 
 ### Prerequisites

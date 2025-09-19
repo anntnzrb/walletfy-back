@@ -3,7 +3,7 @@
  */
 
 import type { Model } from 'mongoose';
-import type { Event } from '../src/validators/event.validator';
+import type { Event } from '@validators/event.validator';
 
 describe('EventModel resolveModel', () => {
   afterEach(() => {
@@ -30,7 +30,7 @@ describe('EventModel resolveModel', () => {
       Schema: mongooseDefault.Schema,
     }));
 
-    const module = await import('../src/models/event.model');
+    const module = await import('@models/event.model');
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const model = module.eventModel;
 
@@ -59,7 +59,7 @@ describe('EventModel findAll', () => {
   };
 
   it('applies sort when query contains sortBy', async () => {
-    const { EventModel } = await import('../src/models/event.model');
+    const { EventModel } = await import('@models/event.model');
     const { model, query } = buildModelStub();
     const eventModel = new EventModel(model);
 
@@ -69,7 +69,7 @@ describe('EventModel findAll', () => {
   });
 
   it('omits sort when query does not include sortBy', async () => {
-    const { EventModel } = await import('../src/models/event.model');
+    const { EventModel } = await import('@models/event.model');
     const { model, query } = buildModelStub();
     const eventModel = new EventModel(model);
 

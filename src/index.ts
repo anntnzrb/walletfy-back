@@ -6,9 +6,9 @@
 import 'dotenv/config';
 import type { Server } from 'http';
 import { promisify } from 'util';
-import app from './app';
-import { logger } from './core/utils/logger';
-import { connectMongo, disconnectMongo } from './core/database/mongoose';
+import app from '@/app';
+import { logger } from '@core/utils/logger';
+import { connectMongo, disconnectMongo } from '@core/database/mongoose';
 
 /**
  * Resolved HTTP port for the Express server (defaults to 3030 when unset)

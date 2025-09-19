@@ -3,14 +3,14 @@
  */
 
 import type { Request, Response, NextFunction } from 'express';
-import { eventModel } from '../models/event.model';
+import { eventModel } from '@models/event.model';
 import {
   CreateEventSchema,
   UpdateEventSchema,
   EventQuerySchema,
-} from '../validators/event.validator';
-import { NotFoundError } from '../core/middleware/errorHandler';
-import { renderEvent, renderEventCollection } from '../views/event.view';
+} from '@validators/event.validator';
+import { NotFoundError } from '@core/middleware/errorHandler';
+import { renderEvent, renderEventCollection } from '@views/event.view';
 
 /**
  * Controller class handling HTTP requests for event management endpoints

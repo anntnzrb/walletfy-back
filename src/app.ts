@@ -5,9 +5,9 @@
 
 import express, { type Request, type Response } from 'express';
 import mongoose from 'mongoose';
-import { logger } from './core/middleware/logger';
-import { errorHandler } from './core/middleware/errorHandler';
-import eventRoutes from './routes/event.routes';
+import { logger } from '@core/middleware/logger';
+import { errorHandler } from '@core/middleware/errorHandler';
+import eventRoutes from '@routes/event.routes';
 
 /**
  * Express application instance

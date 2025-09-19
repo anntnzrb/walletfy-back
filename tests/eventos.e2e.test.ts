@@ -5,8 +5,8 @@
 import 'dotenv/config';
 import request from 'supertest';
 import mongoose from 'mongoose';
-import app from '../src/app';
-import { connectMongo, disconnectMongo } from '../src/core/database/mongoose';
+import app from '@/app';
+import { connectMongo, disconnectMongo } from '@core/database/mongoose';
 
 const EVENT_ENDPOINT = '/api/v1/eventos';
 

@@ -3,11 +3,11 @@
  */
 
 import type { Request, Response, NextFunction } from 'express';
-import { EventController } from '../src/controllers/event.controller';
-import { eventModel } from '../src/models/event.model';
-import { renderEvent, renderEventCollection } from '../src/views/event.view';
+import { EventController } from '@/controllers/event.controller';
+import { eventModel } from '@models/event.model';
+import { renderEvent, renderEventCollection } from '@views/event.view';
 
-jest.mock('../src/models/event.model', () => ({
+jest.mock('@models/event.model', () => ({
   eventModel: {
     create: jest.fn(),
     findAll: jest.fn(),
@@ -18,7 +18,7 @@ jest.mock('../src/models/event.model', () => ({
   EventModel: class {},
 }));
 
-jest.mock('../src/views/event.view', () => ({
+jest.mock('@views/event.view', () => ({
   renderEvent: jest.fn((event) => event),
   renderEventCollection: jest.fn((collection) => collection),
 }));

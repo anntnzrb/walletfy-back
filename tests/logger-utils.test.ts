@@ -2,7 +2,7 @@
  * @fileoverview Unit tests for the structured logger utility
  */
 
-import { logger } from '../src/core/utils/logger';
+import { logger } from '@core/utils/logger';
 
 describe('logger utility', () => {
   const original = {

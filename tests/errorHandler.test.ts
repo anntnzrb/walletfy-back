@@ -8,8 +8,8 @@ import {
   errorHandler,
   NotFoundError,
   ValidationError,
-} from '../src/core/middleware/errorHandler';
-import { logger } from '../src/core/utils/logger';
+} from '@core/middleware/errorHandler';
+import { logger } from '@core/utils/logger';
 
 describe('errorHandler middleware', () => {
   const createMocks = () => {

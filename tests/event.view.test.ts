@@ -2,7 +2,7 @@
  * @fileoverview Unit tests for Event view helpers
  */
 
-import { renderEvent, renderEventCollection } from '../src/views/event.view';
+import { renderEvent, renderEventCollection } from '@views/event.view';
 
 describe('renderEvent', () => {
   it('converts Date into ISO strings while preserving fields', () => {

@@ -97,6 +97,7 @@ Strict mode enabled with comprehensive null safety:
 - `strictNullChecks`: true
 - `noUncheckedIndexedAccess`: true
 - All strict compiler options enabled
+- `baseUrl` and `paths` aliases enforce `@/...` imports instead of deep relativies
 
 ### ESLint Configuration
 Uses strictest possible TypeScript ESLint rules:

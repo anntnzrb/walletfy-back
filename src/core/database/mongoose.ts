@@ -4,7 +4,7 @@
  */
 
 import mongoose from 'mongoose';
-import { logger } from '../utils/logger';
+import { logger } from '@core/utils/logger';
 
 /** mongoose ready state representing an established connection */
 const READY_STATE_CONNECTED = mongoose.STATES.connected;

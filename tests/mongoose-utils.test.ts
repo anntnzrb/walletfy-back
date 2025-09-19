@@ -4,8 +4,8 @@
 
 import 'dotenv/config';
 import mongoose from 'mongoose';
-import { connectMongo, disconnectMongo } from '../src/core/database/mongoose';
-import { logger } from '../src/core/utils/logger';
+import { connectMongo, disconnectMongo } from '@core/database/mongoose';
+import { logger } from '@core/utils/logger';
 
 const setReadyState = (state: number) => {
   Object.defineProperty(mongoose.connection, 'readyState', {

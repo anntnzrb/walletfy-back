@@ -8,7 +8,7 @@ import {
   type Response,
   type NextFunction,
 } from 'express';
-import { eventController } from '../controllers/event.controller';
+import { eventController } from '@controllers/event.controller';
 
 /**
  * Wraps async route handlers to handle promise rejections

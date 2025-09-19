@@ -2,8 +2,8 @@
  * @fileoverview View helpers responsible for shaping Event responses
  */
 
-import type { Event } from '../validators/event.validator';
-import type { PaginatedResult } from '../models/event.model';
+import type { Event } from '@validators/event.validator';
+import type { PaginatedResult } from '@models/event.model';
 
 type EventLike = Omit<Event, 'fecha'> & { fecha: Date | string };
 

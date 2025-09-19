@@ -6,7 +6,7 @@
  */
 
 import type { Request, Response, NextFunction } from 'express';
-import { logger as appLogger } from '../utils/logger';
+import { logger as appLogger } from '@core/utils/logger';
 
 /**
  * Express middleware function that logs incoming HTTP requests with detailed information

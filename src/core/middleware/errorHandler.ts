@@ -9,7 +9,7 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
-import { logger } from '../utils/logger';
+import { logger } from '@core/utils/logger';
 
 /**
  * Extended Error interface that includes additional properties for application-specific errors

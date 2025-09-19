@@ -53,6 +53,17 @@ const config = {
     '@typescript-eslint/prefer-string-starts-ends-with': 'error',
     '@typescript-eslint/prefer-ts-expect-error': 'error',
     '@typescript-eslint/unified-signatures': 'error',
+    '@typescript-eslint/no-restricted-imports': [
+      'error',
+      {
+        patterns: [
+          {
+            group: ['../*', '../**'],
+            message: 'Use configured path aliases (e.g. @/...) instead of relative imports.',
+          },
+        ],
+      },
+    ],
     'prefer-const': 'error',
     'no-var': 'error',
     'no-console': 'warn',
