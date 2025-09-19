@@ -40,25 +40,28 @@ npm run lint && npm run format:check && npm run build
 
 ## Architecture Overview
 
-### Clean Architecture Implementation
-This codebase follows Clean Architecture principles with Domain-Driven Design patterns:
+### MVC Implementation
+This codebase now follows a traditional Model-View-Controller layout:
 
-- **API Layer** (`src/api/events/`): HTTP request handling, validation, and response formatting
-- **Core Layer** (`src/core/`): Cross-cutting concerns like middleware and utilities
-- **Domain Logic**: Encapsulated within service and repository layers
+- **Controllers** (`src/controllers/`): Express handlers responsible for validation, error translation, and delegating to models/views.
+- **Models** (`src/models/`): Mongoose-backed data layer that encapsulates persistence rules and pagination helpers.
+- **Views** (`src/views/`): Pure functions that format model entities into transport-ready JSON payloads.
+- **Validators** (`src/validators/`): Zod schemas shared across controllers and models for strong typing.
 
-### Layered Structure
+### Request Flow
 ```
-Controller → Service → Repository → Data Storage
+Router → Controller → Model ↔ MongoDB
+                 ↓
+               View → JSON response
 ```
 
-**Controller** (`event.controller.ts`): HTTP request/response handling and input validation using Zod schemas
-**Service** (`event.service.ts`): Business logic and orchestration between layers
-**Repository** (`event.repository.ts`): Data access abstraction with in-memory storage (currently)
+**Controller** (`event.controller.ts`): Validates requests, calls the model, maps results through the view helpers, and raises `NotFoundError` when needed.
+**Model** (`event.model.ts`): Owns Mongoose schemas, CRUD helpers, and pagination logic.
+**View** (`event.view.ts`): Provides `renderEvent` / `renderEventCollection` to normalize outbound payloads (ISO date strings, etc.).
 
 ### Key Architectural Patterns
 
-**Schema-First Design**: All data validation is handled through Zod schemas with derived TypeScript types:
+**Schema-First Design** (`src/validators/event.validator.ts`): All data validation is handled through Zod schemas with derived TypeScript types:
 - `EventSchema`: Complete event validation
 - `CreateEventSchema`: Excludes auto-generated fields (ID)
 - `UpdateEventSchema`: All fields optional for partial updates

@@ -3,22 +3,32 @@
  */
 
 import type { Request, Response, NextFunction } from 'express';
-import { EventController } from '../src/api/events/event.controller';
-import { eventService } from '../src/api/events/event.service';
+import { EventController } from '../src/controllers/event.controller';
+import { eventModel } from '../src/models/event.model';
+import { renderEvent, renderEventCollection } from '../src/views/event.view';
 
-jest.mock('../src/api/events/event.service', () => ({
-  eventService: {
-    createEvent: jest.fn(),
-    getAllEvents: jest.fn(),
-    getEventById: jest.fn(),
-    updateEvent: jest.fn(),
-    deleteEvent: jest.fn(),
+jest.mock('../src/models/event.model', () => ({
+  eventModel: {
+    create: jest.fn(),
+    findAll: jest.fn(),
+    findById: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
   },
+  EventModel: class {},
+}));
+
+jest.mock('../src/views/event.view', () => ({
+  renderEvent: jest.fn((event) => event),
+  renderEventCollection: jest.fn((collection) => collection),
 }));
 
 describe('EventController helpers', () => {
   const controller = new EventController();
-  const mockedService = eventService as jest.Mocked<typeof eventService>;
+  const mockedModel = eventModel as jest.Mocked<typeof eventModel>;
+  const mockedRenderEvent = renderEvent as jest.MockedFunction<typeof renderEvent>;
+  const mockedRenderEventCollection =
+    renderEventCollection as jest.MockedFunction<typeof renderEventCollection>;
 
   const createResponse = () => {
     const res = {
@@ -46,11 +56,12 @@ describe('EventController helpers', () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({ error: 'Event ID is required' });
-    expect(mockedService.getEventById).not.toHaveBeenCalled();
+    expect(mockedModel.findById).not.toHaveBeenCalled();
   });
 
-  it('delegates to service when id is present', async () => {
-    mockedService.getEventById.mockResolvedValueOnce({} as never);
+  it('delegates to model and view when id is present', async () => {
+    mockedModel.findById.mockResolvedValueOnce({ id: 'abc' } as never);
+    mockedRenderEvent.mockReturnValueOnce({ id: 'abc' } as never);
 
     const req = {
       params: { id: 'abc' },
@@ -59,12 +70,30 @@ describe('EventController helpers', () => {
 
     await controller.getEventById(req, res, noopNext);
 
-    expect(mockedService.getEventById).toHaveBeenCalledWith('abc');
+    expect(mockedModel.findById).toHaveBeenCalledWith('abc');
+    expect(mockedRenderEvent).toHaveBeenCalledWith({ id: 'abc' });
+  });
+
+  it('passes NotFoundError to next when entity is missing', async () => {
+    mockedModel.findById.mockResolvedValueOnce(null as never);
+
+    const req = {
+      params: { id: 'missing' },
+    } as unknown as Request;
+    const res = createResponse();
+    const next = jest.fn();
+
+    await controller.getEventById(req, res, next);
+
+    expect(next).toHaveBeenCalledWith(expect.any(Error));
+    const [error] = next.mock.calls[0];
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toBe('Event not found');
   });
 
   it('forwards errors to next via execute helper', async () => {
     const error = new Error('boom');
-    mockedService.createEvent.mockRejectedValueOnce(error);
+    mockedModel.create.mockRejectedValueOnce(error);
 
     const req = {
       body: {
@@ -80,5 +109,22 @@ describe('EventController helpers', () => {
     await controller.createEvent(req, res, next);
 
     expect(next).toHaveBeenCalledWith(error);
+  });
+
+  it('renders collection when fetching events', async () => {
+    mockedModel.findAll.mockResolvedValueOnce({ data: [] } as never);
+    mockedRenderEventCollection.mockReturnValueOnce({ data: [] } as never);
+
+    const req = {
+      query: {},
+    } as unknown as Request;
+    const res = createResponse();
+
+    await controller.getAllEvents(req, res, noopNext);
+
+    expect(mockedModel.findAll).toHaveBeenCalledWith({});
+    expect(mockedRenderEventCollection).toHaveBeenCalledWith({ data: [] });
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ data: [] });
   });
 });

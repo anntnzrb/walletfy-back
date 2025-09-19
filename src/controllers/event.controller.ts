@@ -3,16 +3,19 @@
  */
 
 import type { Request, Response, NextFunction } from 'express';
-import { eventService } from './event.service';
+import { eventModel } from '../models/event.model';
 import {
   CreateEventSchema,
   UpdateEventSchema,
   EventQuerySchema,
-} from './event.schema';
+} from '../validators/event.validator';
+import { NotFoundError } from '../core/middleware/errorHandler';
+import { renderEvent, renderEventCollection } from '../views/event.view';
 
 /**
  * Controller class handling HTTP requests for event management endpoints
- * Validates request data and delegates business logic to the service layer
+ * Validates request data, delegates persistence to the model, and shapes
+ * responses through the view helpers
  */
 export class EventController {
   /**
@@ -69,9 +72,9 @@ export class EventController {
   ): Promise<void> {
     await this.execute(next, async () => {
       const validatedData = CreateEventSchema.parse(req.body);
-      const event = await eventService.createEvent(validatedData);
+      const event = await eventModel.create(validatedData);
 
-      res.status(201).json(event);
+      res.status(201).json(renderEvent(event));
     });
   }
 
@@ -92,9 +95,9 @@ export class EventController {
   ): Promise<void> {
     await this.execute(next, async () => {
       const validatedQuery = EventQuerySchema.parse(req.query);
-      const result = await eventService.getAllEvents(validatedQuery);
+      const result = await eventModel.findAll(validatedQuery);
 
-      res.status(200).json(result);
+      res.status(200).json(renderEventCollection(result));
     });
   }
 
@@ -114,9 +117,13 @@ export class EventController {
     next: NextFunction,
   ): Promise<void> {
     await this.withEventId(req, res, next, async (id) => {
-      const event = await eventService.getEventById(id);
+      const event = await eventModel.findById(id);
 
-      res.status(200).json(event);
+      if (!event) {
+        throw new NotFoundError('Event');
+      }
+
+      res.status(200).json(renderEvent(event));
     });
   }
 
@@ -138,9 +145,13 @@ export class EventController {
   ): Promise<void> {
     await this.withEventId(req, res, next, async (id) => {
       const validatedData = UpdateEventSchema.parse(req.body);
-      const event = await eventService.updateEvent(id, validatedData);
+      const event = await eventModel.update(id, validatedData);
 
-      res.status(200).json(event);
+      if (!event) {
+        throw new NotFoundError('Event');
+      }
+
+      res.status(200).json(renderEvent(event));
     });
   }
 
@@ -160,7 +171,11 @@ export class EventController {
     next: NextFunction,
   ): Promise<void> {
     await this.withEventId(req, res, next, async (id) => {
-      await eventService.deleteEvent(id);
+      const deleted = await eventModel.delete(id);
+
+      if (!deleted) {
+        throw new NotFoundError('Event');
+      }
 
       res.status(204).send();
     });

@@ -1,5 +1,5 @@
 /**
- * @fileoverview Event repository layer backed by MongoDB using mongoose
+ * @fileoverview Event model layer backed by MongoDB using mongoose
  */
 
 import mongoose, {
@@ -14,10 +14,10 @@ import type {
   CreateEvent,
   UpdateEvent,
   EventQuery,
-} from './event.schema';
+} from '../validators/event.validator';
 
 /**
- * Paginated result wrapper for repository queries
+ * Paginated result wrapper for model queries
  */
 export interface PaginatedResult<T> {
   data: T[];
@@ -62,9 +62,9 @@ const resolveModel = (): Model<Event> => {
 };
 
 /**
- * Repository providing CRUD operations for Event entities stored in MongoDB
+ * Model providing CRUD operations for Event entities stored in MongoDB
  */
-export class EventRepository {
+export class EventModel {
   private readonly model: Model<Event>;
 
   /**
@@ -162,4 +162,7 @@ export class EventRepository {
   }
 }
 
-export const eventRepository = new EventRepository();
+/**
+ * Singleton EventModel instance used across controllers
+ */
+export const eventModel = new EventModel();

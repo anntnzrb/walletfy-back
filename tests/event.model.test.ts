@@ -1,11 +1,11 @@
 /**
- * @fileoverview Tests for repository model resolution logic
+ * @fileoverview Tests for EventModel resolution and query helpers
  */
 
 import type { Model } from 'mongoose';
-import type { Event } from '../src/api/events/event.schema';
+import type { Event } from '../src/validators/event.validator';
 
-describe('EventRepository resolveModel', () => {
+describe('EventModel resolveModel', () => {
   afterEach(() => {
     jest.resetModules();
     jest.dontMock('mongoose');
@@ -30,15 +30,15 @@ describe('EventRepository resolveModel', () => {
       Schema: mongooseDefault.Schema,
     }));
 
-    const module = await import('../src/api/events/event.repository');
+    const module = await import('../src/models/event.model');
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const repository = module.eventRepository;
+    const model = module.eventModel;
 
     expect(modelSpy).toHaveBeenCalledWith('Event', expect.anything());
   });
 });
 
-describe('EventRepository findAll', () => {
+describe('EventModel findAll', () => {
   const buildModelStub = () => {
     const query: any = {};
     query.skip = jest.fn().mockReturnValue(query);
@@ -59,21 +59,21 @@ describe('EventRepository findAll', () => {
   };
 
   it('applies sort when query contains sortBy', async () => {
-    const { EventRepository } = await import('../src/api/events/event.repository');
+    const { EventModel } = await import('../src/models/event.model');
     const { model, query } = buildModelStub();
-    const repository = new EventRepository(model);
+    const eventModel = new EventModel(model);
 
-    await repository.findAll({ sortBy: 'cantidad', sortOrder: 'desc' });
+    await eventModel.findAll({ sortBy: 'cantidad', sortOrder: 'desc' });
 
     expect(query.sort).toHaveBeenCalledWith({ cantidad: -1 });
   });
 
   it('omits sort when query does not include sortBy', async () => {
-    const { EventRepository } = await import('../src/api/events/event.repository');
+    const { EventModel } = await import('../src/models/event.model');
     const { model, query } = buildModelStub();
-    const repository = new EventRepository(model);
+    const eventModel = new EventModel(model);
 
-    await repository.findAll();
+    await eventModel.findAll();
 
     expect(query.sort).not.toHaveBeenCalled();
   });

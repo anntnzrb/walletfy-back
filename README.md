@@ -1,6 +1,6 @@
 # Walletfy Backend
 
-Walletfy is a TypeScript/Express API for managing financial events (`ingreso`/`egreso`) with MongoDB persistence. The project follows Clean Architecture principles and enforces strict typing and validation via Zod.
+Walletfy is a TypeScript/Express API for managing financial events (`ingreso`/`egreso`) with MongoDB persistence. The project follows a classic MVC structure—controllers handle HTTP flow, models encapsulate persistence logic, and views shape JSON payloads—while enforcing strict typing and validation through Zod.
 
 ## Getting Started
 
