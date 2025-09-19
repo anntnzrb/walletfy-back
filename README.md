@@ -1,30 +1,17 @@
 # Walletfy Backend
 
-Walletfy is a TypeScript/Express API for managing financial events (`ingreso`/`egreso`) with MongoDB persistence. The project follows a classic MVC structure—controllers handle HTTP flow, models encapsulate persistence logic, and views shape JSON payloads—while enforcing strict typing and validation through Zod.
+Walletfy powers the event Tracking experience for the Walletfy platform. It records incomes (`ingresos`) and expenses (`egresos`), keeps totals up to date, and exposes that information to the client applications.
 
-## Import Aliases
+## What You Can Do
+- Register new financial events with names, amounts, dates, notes, and attachments
+- Browse stored events with filtering and pagination support
+- Update or remove previously captured entries
+- Monitor service health through a lightweight status endpoint
 
-All source files use path aliases configured in `tsconfig.json` (`@/`, `@models/`, etc.) to avoid deep relative imports. ESLint blocks `../` style imports—stick to the aliases when adding new modules.
-
-## Getting Started
-
-### Prerequisites
-- Node.js 22+
-- npm
-- MongoDB connection string
-
-### Installation
-```bash
-npm install
-cp .env.example .env # populate MONGODB_URI and DB_NAME
-```
-
-### Development
-```bash
-npm run dev
-```
-
-> Tests connect to the MongoDB URI in `.env` and truncate the `events` collection before/after each run.
+## Documentation
+Full setup details, architecture notes, and workflow tips live in the `/docs` folder:
+- `docs/development.md` — local environment setup, useful commands, and testing guidance
+- `docs/architecture.md` — system design overview and code layout
 
 ## License
 GPL-3.0-or-later — see `COPYING`
