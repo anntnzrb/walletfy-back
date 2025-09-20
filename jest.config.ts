@@ -9,7 +9,7 @@ import { compilerOptions } from './tsconfig.json';
 const config: Config = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  roots: ['<rootDir>/tests'],
+  roots: ['<rootDir>/src', '<rootDir>/tests'],
   moduleFileExtensions: ['ts', 'js'],
   clearMocks: true,
   moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths ?? {}, {
