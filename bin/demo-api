@@ -179,7 +179,7 @@ demo_api_workflow() {
         fi
 
         # Wait a moment between steps for readability
-        sleep 1
+        sleep 4
     }
 
     # Demo workflow steps
