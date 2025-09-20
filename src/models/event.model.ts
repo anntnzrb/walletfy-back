@@ -54,6 +54,11 @@ const eventSchema = new Schema<Event>(
   },
 );
 
+// Add indexes for optimal query performance
+eventSchema.index({ tipo: 1, fecha: -1 }); // For filtered queries
+eventSchema.index({ fecha: -1 }); // For date-based sorting
+eventSchema.index({ cantidad: -1 }); // For amount-based sorting
+
 const resolveModel = (): Model<Event> => {
   return (
     (mongoose.models.Event as Model<Event> | undefined) ??
