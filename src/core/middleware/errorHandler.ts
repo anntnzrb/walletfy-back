@@ -173,12 +173,15 @@ export const errorHandler = (
   }
 
   // Log error details for debugging and monitoring
-  logger.error(`${error.name}: ${error.message}`, {
-    stack: error.stack,
-    statusCode,
-    url: req.url,
-    method: req.method,
-  });
+  // Only log operational errors, not Zod validation errors to reduce noise
+  if (!(error instanceof ZodError)) {
+    logger.error(`${error.name}: ${error.message}`, {
+      stack: error.stack,
+      statusCode,
+      url: req.url,
+      method: req.method,
+    });
+  }
 
   // Send standardized error response
   res.status(statusCode).json({
