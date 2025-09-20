@@ -16,10 +16,22 @@ export const EventTipoEnum = z.enum(['ingreso', 'egreso']);
  */
 export const EventSchema = z.object({
   id: z.string().uuid('ID debe ser un UUID válido'),
-  nombre: z.string().min(1, 'Nombre es requerido'),
-  descripcion: z.string().optional(),
-  cantidad: z.number().min(0, 'Cantidad debe ser mayor o igual a 0'),
-  fecha: z.coerce.date(),
+  nombre: z
+    .string()
+    .min(1, 'Nombre es requerido')
+    .max(100, 'Nombre demasiado largo'),
+  descripcion: z.string().max(500, 'Descripción demasiado larga').optional(),
+  cantidad: z
+    .number()
+    .min(0.01, 'Cantidad debe ser mayor a 0')
+    .max(999999999, 'Cantidad demasiado grande'),
+  fecha: z.coerce
+    .date()
+    .min(new Date('1900-01-01'), 'Fecha demasiado antigua')
+    .max(
+      new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      'Fecha demasiado lejana',
+    ),
   tipo: EventTipoEnum,
   adjunto: z.string().url('Adjunto debe ser una URL válida').optional(),
 });
@@ -42,7 +54,7 @@ export const UpdateEventSchema = CreateEventSchema.partial();
  */
 export const EventQuerySchema = z.object({
   page: z.coerce.number().min(1).default(1).optional(),
-  limit: z.coerce.number().min(1).max(100).default(10).optional(),
+  limit: z.coerce.number().min(1).max(1000).default(10).optional(),
   tipo: EventTipoEnum.optional(),
   sortBy: z.enum(['nombre', 'cantidad', 'fecha', 'tipo']).optional(),
   sortOrder: z.enum(['asc', 'desc']).default('asc').optional(),
@@ -54,7 +66,7 @@ export const EventQuerySchema = z.object({
  * @property {string} id - Unique UUID identifier
  * @property {string} nombre - Event name
  * @property {string} [descripcion] - Optional event description
- * @property {number} cantidad - Event amount (must be >= 0)
+ * @property {number} cantidad - Event amount (must be >= 0.01)
  * @property {Date} fecha - Event date
  * @property {'ingreso'|'egreso'} tipo - Event type (income or expense)
  * @property {string} [adjunto] - Optional attachment URL
@@ -66,7 +78,7 @@ export type Event = z.infer<typeof EventSchema>;
  * @typedef {Object} CreateEvent
  * @property {string} nombre - Event name
  * @property {string} [descripcion] - Optional event description
- * @property {number} cantidad - Event amount (must be >= 0)
+ * @property {number} cantidad - Event amount (must be >= 0.01)
  * @property {Date} fecha - Event date
  * @property {'ingreso'|'egreso'} tipo - Event type (income or expense)
  * @property {string} [adjunto] - Optional attachment URL
@@ -89,7 +101,7 @@ export type UpdateEvent = z.infer<typeof UpdateEventSchema>;
  * TypeScript type for query parameters with pagination and filtering
  * @typedef {Object} EventQuery
  * @property {number} [page] - Page number for pagination (default: 1)
- * @property {number} [limit] - Items per page (default: 10, max: 100)
+ * @property {number} [limit] - Items per page (default: 10, max: 1000)
  * @property {'ingreso'|'egreso'} [tipo] - Optional filter by event type
  * @property {('nombre'|'cantidad'|'fecha'|'tipo')} [sortBy] - Optional field to sort by
  * @property {'asc'|'desc'} [sortOrder] - Sort ordering (default asc)
