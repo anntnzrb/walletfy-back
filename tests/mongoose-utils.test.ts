@@ -35,18 +35,18 @@ describe('mongo helpers', () => {
     expect(connectSpy).not.toHaveBeenCalled();
   });
 
-  it('logs and rethrows when connection fails', async () => {
+  it('logs and rethrows when connection fails after retries', async () => {
     setReadyState(0);
     process.env.MONGODB_URI = originalUri ?? 'mongodb://localhost:27017/test';
 
     const connectSpy = jest
       .spyOn(mongoose, 'connect')
-      .mockRejectedValueOnce(new Error('bad uri'));
-    const logSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
+      .mockRejectedValue(new Error('bad uri'));
+    const logSpy = jest.spyOn(logger, 'warn').mockImplementation(() => {});
 
     await expect(connectMongo()).rejects.toThrow('bad uri');
-    expect(connectSpy).toHaveBeenCalled();
-    expect(logSpy).toHaveBeenCalled();
+    expect(connectSpy).toHaveBeenCalledTimes(3); // Should retry 3 times
+    expect(logSpy).toHaveBeenCalledTimes(3); // Should log 3 warnings
   });
 
   it('throws when URI is missing', async () => {

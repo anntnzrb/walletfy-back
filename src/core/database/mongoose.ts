@@ -38,19 +38,34 @@ export const connectMongo = async (): Promise<void> => {
   const uri = resolveMongoUri();
   const dbName = process.env.DB_NAME ?? 'walletfy-back';
 
-  try {
-    await mongoose.connect(uri, {
-      dbName,
-    });
+  const maxRetries = 3;
+  let currentTry = 0;
 
-    logger.info('Connected to MongoDB', {
-      dbName,
-    });
-  } catch (error) {
-    logger.error('Failed to connect to MongoDB', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    throw error;
+  while (currentTry < maxRetries) {
+    try {
+      await mongoose.connect(uri, {
+        dbName,
+        maxPoolSize: 10,
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 45000,
+      });
+
+      logger.info('Connected to MongoDB', {
+        dbName,
+      });
+      return;
+    } catch (error) {
+      currentTry++;
+      logger.warn(`MongoDB connection attempt ${currentTry} failed`, {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+
+      if (currentTry >= maxRetries) {
+        throw error;
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 1000 * currentTry));
+    }
   }
 };
 
