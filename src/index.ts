@@ -11,9 +11,25 @@ import { logger } from '@core/utils/logger';
 import { connectMongo, disconnectMongo } from '@core/database/mongoose';
 
 /**
+ * Validates required environment variables at startup
+ */
+const validateEnvironment = (): void => {
+  const required = ['MONGODB_URI'];
+  const missing = required.filter(key => !process.env[key]);
+
+  if (missing.length > 0) {
+    console.error('Missing required environment variables:', missing);
+    process.exit(1);
+  }
+};
+
+/**
  * Resolved HTTP port for the Express server (defaults to 3030 when unset)
  */
 const PORT = Number(process.env.PORT) || 3030;
+
+// Validate environment variables before starting
+validateEnvironment();
 
 /**
  * Boots the HTTP server after establishing the MongoDB connection and
