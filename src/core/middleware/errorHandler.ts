@@ -173,8 +173,8 @@ export const errorHandler = (
   }
 
   // Log error details for debugging and monitoring
-  // Only log operational errors, not Zod validation errors to reduce noise
-  if (!(error instanceof ZodError)) {
+  // Only log non-operational errors (skip Zod and operational like NotFound)
+  if (!(error instanceof ZodError) && (!('isOperational' in error) || !error.isOperational)) {
     logger.error(`${error.name}: ${error.message}`, {
       stack: error.stack,
       statusCode,
