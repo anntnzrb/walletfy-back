@@ -54,7 +54,7 @@ export const UpdateEventSchema = CreateEventSchema.partial();
  */
 export const EventQuerySchema = z.object({
   page: z.coerce.number().min(1).default(1).optional(),
-  limit: z.coerce.number().min(1).max(1000).default(10).optional(),
+  limit: z.coerce.number().min(1).max(50).default(10).optional(),
   tipo: EventTipoEnum.optional(),
   sortBy: z.enum(['nombre', 'cantidad', 'fecha', 'tipo']).optional(),
   sortOrder: z.enum(['asc', 'desc']).default('asc').optional(),
