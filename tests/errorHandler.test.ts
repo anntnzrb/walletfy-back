@@ -24,7 +24,7 @@ describe('errorHandler middleware', () => {
       send: jest.fn(),
     } as unknown as Response;
 
-    const logSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
+    const logSpy = jest.spyOn(logger, 'error').mockImplementation(() => { });
 
     return { req, res, logSpy };
   };
@@ -62,7 +62,7 @@ describe('errorHandler middleware', () => {
 
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith({ error: 'Event not found' });
-    expect(logSpy).toHaveBeenCalled();
+    expect(logSpy).not.toHaveBeenCalled(); // Operational error, no log
   });
 
   it('handles custom ValidationError instances', () => {
@@ -73,7 +73,7 @@ describe('errorHandler middleware', () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({ error: 'bad payload' });
-    expect(logSpy).toHaveBeenCalled();
+    expect(logSpy).not.toHaveBeenCalled(); // Operational error, no log
   });
 
   it('falls back to generic error response', () => {

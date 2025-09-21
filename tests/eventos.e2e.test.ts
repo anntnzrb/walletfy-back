@@ -40,6 +40,7 @@ describe('Eventos API', () => {
   });
 
   it('reports healthy status', async () => {
+    process.env.NODE_ENV = 'development'; // Mock for test to show dbStatus
     const response = await request(app).get('/health').expect(200);
     expect(response.body.status).toBe('ok');
     expect(response.body.dbStatus).toBe('connected');
