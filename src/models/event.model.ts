@@ -104,7 +104,7 @@ export class EventModel {
       sortOrder = 'asc',
     } = query ?? {};
     const filter: FilterQuery<Event> = tipo ? { tipo } : {};
-    const offset = (page - 1) * limit;
+    const offset = Math.min((page - 1) * limit, 1000000); // Clamp to prevent overflow/huge skips
     const sortDirection: mongoose.SortOrder = sortOrder === 'desc' ? -1 : 1;
     const sortCriteria: Record<string, mongoose.SortOrder> | undefined = sortBy
       ? { [sortBy]: sortDirection }
