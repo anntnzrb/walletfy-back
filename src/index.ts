@@ -9,18 +9,29 @@ import { promisify } from 'util';
 import app from '@/app';
 import { logger } from '@core/utils/logger';
 import { connectMongo, disconnectMongo } from '@core/database/mongoose';
+import { z } from 'zod';
 
 /**
- * Validates required environment variables at startup
+ * Validates required environment variables at startup using Zod
  */
 const validateEnvironment = (): void => {
-  const required = ['MONGODB_URI'];
-  const missing = required.filter(key => !process.env[key]);
+  const envSchema = z.object({
+    MONGODB_URI: z.string().url('MONGODB_URI must be a valid URL'),
+    DB_NAME: z.string().optional(), // Used in mongoose.ts; warn if missing in logs
+    PORT: z.string().optional().transform((val) => Number(val) || 3030),
+  });
 
-  if (missing.length > 0) {
-    console.error('Missing required environment variables:', missing);
+  const result = envSchema.safeParse(process.env);
+  if (!result.success) {
+    console.error('Environment validation failed:', result.error.errors);
     process.exit(1);
   }
+
+  // Log validated config (non-sensitive)
+  logger.info('Environment validated', {
+    dbName: result.data.DB_NAME || 'walletfy-back',
+    port: result.data.PORT,
+  });
 };
 
 /**
