@@ -52,7 +52,7 @@ app.get('/health', (req: Request, res: Response): void => {
     2: 'connecting',
     3: 'disconnecting',
   };
-  const dbStatus = statusMap[mongoose.connection.readyState] ?? 'unknown';
+  const dbStatus = process.env.NODE_ENV === 'development' ? statusMap[mongoose.connection.readyState] ?? 'unknown' : undefined;
 
   res.status(200).json({
     status: 'ok',
