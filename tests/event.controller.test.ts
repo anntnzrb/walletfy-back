@@ -3,97 +3,103 @@
  */
 
 import type { Request, Response, NextFunction } from 'express';
+import { describe, it, beforeEach, afterEach, assert } from 'poku';
+import sinon from 'sinon';
 import { EventController } from '@/controllers/event.controller';
-import { eventModel } from '@models/event.model';
-import { renderEvent, renderEventCollection } from '@views/event.view';
+import { NotFoundError } from '@core/middleware/errorHandler';
 
-jest.mock('@models/event.model', () => ({
-  eventModel: {
-    create: jest.fn(),
-    findAll: jest.fn(),
-    findById: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
-  },
-  EventModel: class {},
-}));
+type EventModelStub = {
+  create: sinon.SinonStub;
+  findAll: sinon.SinonStub;
+  findById: sinon.SinonStub;
+  update: sinon.SinonStub;
+  delete: sinon.SinonStub;
+};
 
-jest.mock('@views/event.view', () => ({
-  renderEvent: jest.fn((event) => event),
-  renderEventCollection: jest.fn((collection) => collection),
-}));
+const createResponse = (): Response => {
+  const response: Partial<Response> = {};
+  response.status = sinon.stub().callsFake(() => response as Response);
+  response.json = sinon.stub().returns(response as Response);
+  response.send = sinon.stub().returns(response as Response);
+  return response as Response;
+};
+
+const getStatusStub = (res: Response) => res.status as unknown as sinon.SinonStub;
+const getJsonStub = (res: Response) => res.json as unknown as sinon.SinonStub;
 
 describe('EventController helpers', () => {
-  const controller = new EventController();
-  const mockedModel = eventModel as jest.Mocked<typeof eventModel>;
-  const mockedRenderEvent = renderEvent as jest.MockedFunction<typeof renderEvent>;
-  const mockedRenderEventCollection =
-    renderEventCollection as jest.MockedFunction<typeof renderEventCollection>;
+  let model: EventModelStub;
+  let renderEventStub: sinon.SinonStub;
+  let renderCollectionStub: sinon.SinonStub;
+  let controller: EventController;
+  let noopNext: sinon.SinonStub<[unknown?], void>;
 
-  const createResponse = () => {
-    const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-      send: jest.fn(),
-    } as unknown as Response;
+  beforeEach(() => {
+    model = {
+      create: sinon.stub(),
+      findAll: sinon.stub(),
+      findById: sinon.stub(),
+      update: sinon.stub(),
+      delete: sinon.stub(),
+    };
 
-    return res;
-  };
-
-  const noopNext: NextFunction = jest.fn();
+    renderEventStub = sinon.stub().callsFake((event) => event);
+    renderCollectionStub = sinon.stub().callsFake((collection) => collection);
+    controller = new EventController(model, renderEventStub, renderCollectionStub);
+    noopNext = sinon.stub();
+  });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    sinon.restore();
   });
 
   it('responds with 400 when id is missing', async () => {
-    const req = {
-      params: {},
-    } as unknown as Request;
+    const req = { params: {} } as unknown as Request;
     const res = createResponse();
 
-    await controller.getEventById(req, res, noopNext);
+    await controller.getEventById(req, res, noopNext as unknown as NextFunction);
 
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Event ID is required' });
-    expect(mockedModel.findById).not.toHaveBeenCalled();
+    const status = getStatusStub(res);
+    const json = getJsonStub(res);
+
+    assert.strictEqual(status.firstCall?.args[0], 400);
+    assert.deepStrictEqual(json.firstCall?.args[0], { error: 'Event ID is required' });
+    assert.strictEqual(model.findById.called, false);
   });
 
   it('delegates to model and view when id is present', async () => {
-    mockedModel.findById.mockResolvedValueOnce({ id: 'abc' } as never);
-    mockedRenderEvent.mockReturnValueOnce({ id: 'abc' } as never);
+    model.findById.resolves({ id: 'abc' });
+    renderEventStub.returns({ id: 'abc' });
 
-    const req = {
-      params: { id: 'abc' },
-    } as unknown as Request;
+    const req = { params: { id: 'abc' } } as unknown as Request;
     const res = createResponse();
 
-    await controller.getEventById(req, res, noopNext);
+    await controller.getEventById(req, res, noopNext as unknown as NextFunction);
 
-    expect(mockedModel.findById).toHaveBeenCalledWith('abc');
-    expect(mockedRenderEvent).toHaveBeenCalledWith({ id: 'abc' });
+    const status = getStatusStub(res);
+    const json = getJsonStub(res);
+    assert.strictEqual(status.firstCall?.args[0], 200);
+    assert.deepStrictEqual(json.firstCall?.args[0], { id: 'abc' });
   });
 
   it('passes NotFoundError to next when entity is missing', async () => {
-    mockedModel.findById.mockResolvedValueOnce(null as never);
+    model.findById.resolves(null);
 
-    const req = {
-      params: { id: 'missing' },
-    } as unknown as Request;
+    const req = { params: { id: 'missing' } } as unknown as Request;
     const res = createResponse();
-    const next = jest.fn();
+    const next = sinon.stub<[unknown?], void>();
 
-    await controller.getEventById(req, res, next);
+    await controller.getEventById(req, res, next as unknown as NextFunction);
 
-    expect(next).toHaveBeenCalledWith(expect.any(Error));
-    const [error] = next.mock.calls[0];
-    expect(error).toBeInstanceOf(Error);
-    expect((error as Error).message).toBe('Event not found');
+    assert.strictEqual(next.calledOnce, true);
+    const [error] = next.firstCall.args;
+    assert.ok(error instanceof NotFoundError);
+    assert.strictEqual((error as Error).message, 'Event not found');
   });
 
   it('forwards errors to next via execute helper', async () => {
     const error = new Error('boom');
-    mockedModel.create.mockRejectedValueOnce(error);
+    model.create.rejects(error);
 
     const req = {
       body: {
@@ -102,29 +108,33 @@ describe('EventController helpers', () => {
         fecha: new Date('2025-01-01T00:00:00.000Z'),
         tipo: 'ingreso',
       },
-    } as Request;
+    } as unknown as Request;
     const res = createResponse();
-    const next = jest.fn();
+    const next = sinon.stub<[unknown?], void>();
 
-    await controller.createEvent(req, res, next);
+    await controller.createEvent(req, res, next as unknown as NextFunction);
 
-    expect(next).toHaveBeenCalledWith(error);
+    assert.strictEqual(next.called, true);
+    assert.strictEqual(next.firstCall?.args[0], error);
   });
 
   it('renders collection when fetching events', async () => {
-    mockedModel.findAll.mockResolvedValueOnce({ data: [] } as never);
-    mockedRenderEventCollection.mockReturnValueOnce({ data: [] } as never);
+    const parsedQuery = { data: [], total: 0, page: 1, limit: 10, totalPages: 0 };
+    model.findAll.resolves(parsedQuery);
+    renderCollectionStub.returns({ data: [] });
 
-    const req = {
-      query: {},
-    } as unknown as Request;
+    const req = { query: {} } as unknown as Request;
     const res = createResponse();
 
-    await controller.getAllEvents(req, res, noopNext);
+    await controller.getAllEvents(req, res, noopNext as unknown as NextFunction);
 
-    expect(mockedModel.findAll).toHaveBeenCalledWith({});
-    expect(mockedRenderEventCollection).toHaveBeenCalledWith({ data: [] });
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({ data: [] });
+    assert.strictEqual(model.findAll.called, true);
+    const [arg] = model.findAll.firstCall.args;
+    assert.deepStrictEqual(arg, {});
+    assert.strictEqual(renderCollectionStub.calledWithMatch(parsedQuery), true);
+    const status = getStatusStub(res);
+    const json = getJsonStub(res);
+    assert.strictEqual(status.firstCall?.args[0], 200);
+    assert.deepStrictEqual(json.firstCall?.args[0], { data: [] });
   });
 });

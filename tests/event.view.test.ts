@@ -2,6 +2,7 @@
  * @fileoverview Unit tests for Event view helpers
  */
 
+import { describe, it, assert } from 'poku';
 import { renderEvent, renderEventCollection } from '@views/event.view';
 
 describe('renderEvent', () => {
@@ -18,7 +19,7 @@ describe('renderEvent', () => {
 
     const rendered = renderEvent(event);
 
-    expect(rendered).toEqual({
+    assert.deepStrictEqual(rendered, {
       id: 'event-1',
       nombre: 'Ingreso',
       descripcion: 'Test',
@@ -40,7 +41,7 @@ describe('renderEvent', () => {
 
     const rendered = renderEvent(event);
 
-    expect(rendered.fecha).toBe('not-a-date');
+    assert.strictEqual(rendered.fecha, 'not-a-date');
   });
 });
 
@@ -62,7 +63,7 @@ describe('renderEventCollection', () => {
       totalPages: 1,
     });
 
-    expect(result).toEqual({
+    assert.deepStrictEqual(result, {
       data: [
         {
           id: 'event-1',

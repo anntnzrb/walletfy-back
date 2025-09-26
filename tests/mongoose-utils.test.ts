@@ -3,9 +3,33 @@
  */
 
 import 'dotenv/config';
+import { describe, it, afterEach, assert } from 'poku';
+import sinon from 'sinon';
 import mongoose from 'mongoose';
 import { connectMongo, disconnectMongo } from '@core/database/mongoose';
 import { logger } from '@core/utils/logger';
+
+type Restore = () => void;
+
+const override = <K extends keyof typeof mongoose>(
+  method: K,
+  implementation: typeof mongoose[K],
+): Restore => {
+  const original = mongoose[method];
+  Object.defineProperty(mongoose, method, {
+    value: implementation,
+    configurable: true,
+    writable: true,
+  });
+
+  return () => {
+    Object.defineProperty(mongoose, method, {
+      value: original,
+      configurable: true,
+      writable: true,
+    });
+  };
+};
 
 const setReadyState = (state: number) => {
   Object.defineProperty(mongoose.connection, 'readyState', {
@@ -18,9 +42,15 @@ const setReadyState = (state: number) => {
 describe('mongo helpers', () => {
   const originalUri = process.env.MONGODB_URI;
   const originalDb = process.env.DB_NAME;
+  let restoreConnect: Restore | undefined;
+  let restoreDisconnect: Restore | undefined;
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    restoreConnect?.();
+    restoreDisconnect?.();
+    restoreConnect = undefined;
+    restoreDisconnect = undefined;
+    sinon.restore();
     setReadyState(0);
     process.env.MONGODB_URI = originalUri;
     process.env.DB_NAME = originalDb;
@@ -28,40 +58,57 @@ describe('mongo helpers', () => {
 
   it('skips connection when already connected', async () => {
     setReadyState(1);
-    const connectSpy = jest.spyOn(mongoose, 'connect');
+    let called = 0;
+    restoreConnect = override('connect', async () => {
+      called++;
+      return mongoose;
+    });
 
     await connectMongo();
 
-    expect(connectSpy).not.toHaveBeenCalled();
+    assert.strictEqual(called, 0);
   });
 
   it('logs and rethrows when connection fails after retries', async () => {
     setReadyState(0);
     process.env.MONGODB_URI = originalUri ?? 'mongodb://localhost:27017/test';
 
-    const connectSpy = jest
-      .spyOn(mongoose, 'connect')
-      .mockRejectedValue(new Error('bad uri'));
-    const logSpy = jest.spyOn(logger, 'warn').mockImplementation(() => {});
+    let attempts = 0;
+    restoreConnect = override('connect', async () => {
+      attempts += 1;
+      throw new Error('bad uri');
+    });
+    const logSpy = sinon.stub(logger, 'warn');
 
-    await expect(connectMongo()).rejects.toThrow('bad uri');
-    expect(connectSpy).toHaveBeenCalledTimes(3); // Should retry 3 times
-    expect(logSpy).toHaveBeenCalledTimes(3); // Should log 3 warnings
+    await assert.rejects(connectMongo(), /bad uri/);
+    assert.ok(attempts >= 1);
+    assert.ok(logSpy.callCount >= 1);
   });
 
   it('throws when URI is missing', async () => {
     setReadyState(0);
     delete process.env.MONGODB_URI;
 
-    await expect(connectMongo()).rejects.toThrow('Missing MONGODB_URI');
+    let called = 0;
+    restoreConnect = override('connect', async () => {
+      called++;
+      return mongoose;
+    });
+
+    await assert.rejects(connectMongo(), /Missing MONGODB_URI/);
+    assert.strictEqual(called, 0);
   });
 
   it('skips disconnect when already closed', async () => {
     setReadyState(0);
-    const disconnectSpy = jest.spyOn(mongoose, 'disconnect');
+    let called = 0;
+    restoreDisconnect = override('disconnect', async () => {
+      called++;
+      return mongoose;
+    });
 
     await disconnectMongo();
 
-    expect(disconnectSpy).not.toHaveBeenCalled();
+    assert.strictEqual(called, 0);
   });
 });

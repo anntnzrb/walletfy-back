@@ -2,57 +2,53 @@
  * @fileoverview Unit tests for the structured logger utility
  */
 
+import { describe, it, afterEach, assert } from 'poku';
+import sinon from 'sinon';
 import { logger } from '@core/utils/logger';
 
 describe('logger utility', () => {
-  const original = {
-    error: console.error,
-    warn: console.warn,
-    info: console.info,
-    debug: console.debug,
-  };
-
   afterEach(() => {
-    console.error = original.error;
-    console.warn = original.warn;
-    console.info = original.info;
-    console.debug = original.debug;
+    sinon.restore();
   });
 
   it('logs errors with metadata', () => {
-    const spy = jest.fn();
-    console.error = spy;
+    const spy = sinon.stub(console, 'error');
 
     logger.error('failure', { code: 500 });
 
-    expect(spy).toHaveBeenCalledWith(expect.stringContaining('"level":"ERROR"'));
-    expect(spy).toHaveBeenCalledWith(expect.stringContaining('"code":500'));
+    assert.strictEqual(spy.calledOnce, true);
+    const [message] = spy.firstCall.args as [string];
+    assert.ok(message.includes('"level":"ERROR"'));
+    assert.ok(message.includes('"code":500'));
   });
 
   it('logs warnings', () => {
-    const spy = jest.fn();
-    console.warn = spy;
+    const spy = sinon.stub(console, 'warn');
 
     logger.warn('caution');
 
-    expect(spy).toHaveBeenCalledWith(expect.stringContaining('"level":"WARN"'));
+    assert.strictEqual(spy.calledOnce, true);
+    const [message] = spy.firstCall.args as [string];
+    assert.ok(message.includes('"level":"WARN"'));
   });
 
   it('logs info messages', () => {
-    const spy = jest.fn();
-    console.info = spy;
+    const spy = sinon.stub(console, 'info');
 
     logger.info('details');
 
-    expect(spy).toHaveBeenCalledWith(expect.stringContaining('"level":"INFO"'));
+    assert.strictEqual(spy.calledOnce, true);
+    const [message] = spy.firstCall.args as [string];
+    assert.ok(message.includes('"level":"INFO"'));
   });
 
   it('logs debug traces', () => {
-    const spy = jest.fn();
-    console.debug = spy;
+    const spy = sinon.stub(console, 'debug');
 
     logger.debug('trace');
 
-    expect(spy).toHaveBeenCalledWith(expect.stringContaining('"level":"DEBUG"'));
+    assert.strictEqual(spy.calledOnce, true);
+    const [message] = spy.firstCall.args as [string];
+    assert.ok(message.includes('"level":"DEBUG"'));
   });
 });

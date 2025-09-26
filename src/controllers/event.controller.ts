@@ -4,6 +4,7 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { eventModel } from '@models/event.model';
+import type { EventModel } from '@models/event.model';
 import {
   CreateEventSchema,
   UpdateEventSchema,
@@ -12,12 +13,23 @@ import {
 import { NotFoundError } from '@core/middleware/errorHandler';
 import { renderEvent, renderEventCollection } from '@views/event.view';
 
+type EventModelContract = Pick<
+  EventModel,
+  'create' | 'findAll' | 'findById' | 'update' | 'delete'
+>;
+
 /**
  * Controller class handling HTTP requests for event management endpoints
  * Validates request data, delegates persistence to the model, and shapes
  * responses through the view helpers
  */
 export class EventController {
+  constructor(
+    private readonly model: EventModelContract = eventModel,
+    private readonly renderSingle: typeof renderEvent = renderEvent,
+    private readonly renderCollectionFn: typeof renderEventCollection = renderEventCollection,
+  ) {}
+
   /**
    * Wraps controller logic with shared try/catch forwarding to Express next()
    */
@@ -72,9 +84,9 @@ export class EventController {
   ): Promise<void> {
     await this.execute(next, async () => {
       const validatedData = CreateEventSchema.parse(req.body);
-      const event = await eventModel.create(validatedData);
+      const event = await this.model.create(validatedData);
 
-      res.status(201).json(renderEvent(event));
+      res.status(201).json(this.renderSingle(event));
     });
   }
 
@@ -95,9 +107,9 @@ export class EventController {
   ): Promise<void> {
     await this.execute(next, async () => {
       const validatedQuery = EventQuerySchema.parse(req.query);
-      const result = await eventModel.findAll(validatedQuery);
+      const result = await this.model.findAll(validatedQuery);
 
-      res.status(200).json(renderEventCollection(result));
+      res.status(200).json(this.renderCollectionFn(result));
     });
   }
 
@@ -117,13 +129,13 @@ export class EventController {
     next: NextFunction,
   ): Promise<void> {
     await this.withEventId(req, res, next, async (id) => {
-      const event = await eventModel.findById(id);
+      const event = await this.model.findById(id);
 
       if (!event) {
         throw new NotFoundError('Event');
       }
 
-      res.status(200).json(renderEvent(event));
+      res.status(200).json(this.renderSingle(event));
     });
   }
 
@@ -145,13 +157,13 @@ export class EventController {
   ): Promise<void> {
     await this.withEventId(req, res, next, async (id) => {
       const validatedData = UpdateEventSchema.parse(req.body);
-      const event = await eventModel.update(id, validatedData);
+      const event = await this.model.update(id, validatedData);
 
       if (!event) {
         throw new NotFoundError('Event');
       }
 
-      res.status(200).json(renderEvent(event));
+      res.status(200).json(this.renderSingle(event));
     });
   }
 
@@ -171,7 +183,7 @@ export class EventController {
     next: NextFunction,
   ): Promise<void> {
     await this.withEventId(req, res, next, async (id) => {
-      const deleted = await eventModel.delete(id);
+      const deleted = await this.model.delete(id);
 
       if (!deleted) {
         throw new NotFoundError('Event');

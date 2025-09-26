@@ -3,78 +3,69 @@
  */
 
 import type { Model } from 'mongoose';
+import mongoose from 'mongoose';
+import sinon from 'sinon';
+import { describe, it, afterEach, assert } from 'poku';
 import type { Event } from '@validators/event.validator';
+import { EventModel } from '@models/event.model';
 
 describe('EventModel resolveModel', () => {
   afterEach(() => {
-    jest.resetModules();
-    jest.dontMock('mongoose');
+    sinon.restore();
+    delete (mongoose.models as Record<string, unknown>).Event;
   });
 
-  it('creates model when not previously registered', async () => {
-    const actualMongoose = jest.requireActual('mongoose');
-    const mongooseDefault = actualMongoose.default ?? actualMongoose;
-    const modelSpy = jest.fn();
+  it('creates model when not previously registered', () => {
+    delete (mongoose.models as Record<string, unknown>).Event;
+    const fakeModel = {} as Model<Event>;
+    const modelSpy = sinon.stub(mongoose, 'model').returns(fakeModel);
 
-    jest.resetModules();
-    jest.doMock('mongoose', () => ({
-      __esModule: true,
-      ...actualMongoose,
-      default: { ...mongooseDefault, models: {}, model: modelSpy },
-      models: {},
-      model: modelSpy,
-      connection: { ...mongooseDefault.connection, readyState: 0 },
-      STATES: mongooseDefault.STATES,
-      connect: mongooseDefault.connect,
-      disconnect: mongooseDefault.disconnect,
-      Schema: mongooseDefault.Schema,
-    }));
+    const instance = new EventModel();
 
-    const module = await import('@models/event.model');
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const model = module.eventModel;
-
-    expect(modelSpy).toHaveBeenCalledWith('Event', expect.anything());
+    assert.ok(instance);
+    assert.strictEqual(modelSpy.calledWith('Event'), true);
   });
 });
 
 describe('EventModel findAll', () => {
+  afterEach(() => {
+    sinon.restore();
+  });
+
   const buildModelStub = () => {
     const query: any = {};
-    query.skip = jest.fn().mockReturnValue(query);
-    query.limit = jest.fn().mockReturnValue(query);
-    query.sort = jest.fn().mockReturnValue(query);
-    query.select = jest.fn().mockReturnValue(query);
-    query.lean = jest.fn().mockReturnValue(query);
-    query.exec = jest.fn().mockResolvedValue([]);
+    query.skip = sinon.stub().returns(query);
+    query.limit = sinon.stub().returns(query);
+    query.sort = sinon.stub().returns(query);
+    query.select = sinon.stub().returns(query);
+    query.lean = sinon.stub().returns(query);
+    query.exec = sinon.stub().resolves([]);
 
-    const countExec = jest.fn().mockResolvedValue(0);
+    const countExec = sinon.stub().resolves(0);
 
     const model = {
-      find: jest.fn().mockReturnValue(query),
-      countDocuments: jest.fn().mockReturnValue({ exec: countExec }),
+      find: sinon.stub().returns(query),
+      countDocuments: sinon.stub().returns({ exec: countExec }),
     } as unknown as Model<Event>;
 
     return { model, query, countExec };
   };
 
   it('applies sort when query contains sortBy', async () => {
-    const { EventModel } = await import('@models/event.model');
     const { model, query } = buildModelStub();
     const eventModel = new EventModel(model);
 
     await eventModel.findAll({ sortBy: 'cantidad', sortOrder: 'desc' });
 
-    expect(query.sort).toHaveBeenCalledWith({ cantidad: -1 });
+    assert.strictEqual(query.sort.calledWith({ cantidad: -1 }), true);
   });
 
   it('omits sort when query does not include sortBy', async () => {
-    const { EventModel } = await import('@models/event.model');
     const { model, query } = buildModelStub();
     const eventModel = new EventModel(model);
 
     await eventModel.findAll();
 
-    expect(query.sort).not.toHaveBeenCalled();
+    assert.strictEqual(query.sort.called, false);
   });
 });
