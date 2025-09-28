@@ -4,10 +4,13 @@
  */
 
 import express, { type Request, type Response } from 'express';
+import session from 'express-session';
+import cookieParser from 'cookie-parser';
 import mongoose from 'mongoose';
 import { logger } from '@core/middleware/logger';
 import { errorHandler } from '@core/middleware/errorHandler';
 import eventRoutes from '@routes/event.routes';
+import authRoutes from '@routes/auth.routes';
 
 /**
  * Express application instance
@@ -27,6 +30,29 @@ const startTime = Date.now();
  * Parses incoming requests with JSON payloads
  */
 app.use(express.json());
+
+/**
+ * Configure cookie parser middleware
+ * Parses cookies attached to client requests
+ */
+app.use(cookieParser());
+
+/**
+ * Configure session middleware
+ * Enables session support with secure cookie configuration
+ */
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'fallback-secret-for-development',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    },
+  }),
+);
 
 /**
  * Configure request logging middleware
@@ -52,7 +78,10 @@ app.get('/health', (req: Request, res: Response): void => {
     2: 'connecting',
     3: 'disconnecting',
   };
-  const dbStatus = process.env.NODE_ENV === 'development' ? statusMap[mongoose.connection.readyState] ?? 'unknown' : undefined;
+  const dbStatus =
+    process.env.NODE_ENV === 'development'
+      ? (statusMap[mongoose.connection.readyState] ?? 'unknown')
+      : undefined;
 
   res.status(200).json({
     status: 'ok',
@@ -60,6 +89,12 @@ app.get('/health', (req: Request, res: Response): void => {
     dbStatus,
   });
 });
+
+/**
+ * Configure API routes
+ * Mount authentication routes under versioned /api/v1 prefix
+ */
+app.use('/api/v1/auth', authRoutes);
 
 /**
  * Configure API routes

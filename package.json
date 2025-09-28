@@ -23,16 +23,25 @@
   "author": "anntnzrb",
   "license": "GPL-3.0-or-later",
   "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^17.2.2",
     "express": "^4.18.2",
+    "express-session": "^1.18.2",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.18.1",
     "tsx": "^4.20.5",
     "uuid": "^9.0.1",
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cookie-parser": "^1.4.9",
     "@types/express": "^4.17.21",
+    "@types/express-session": "^1.18.2",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20.10.4",
+    "@types/sinon": "^17.0.3",
     "@types/supertest": "^6.0.3",
     "@types/uuid": "^9.0.7",
     "@typescript-eslint/eslint-plugin": "^8.43.0",
@@ -41,10 +50,9 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.0.1",
     "poku": "^3.0.2",
-    "sinon": "^18.0.0",
     "prettier": "^3.1.1",
+    "sinon": "^18.0.0",
     "supertest": "^7.1.4",
-    "@types/sinon": "^17.0.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   }

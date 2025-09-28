@@ -9,10 +9,19 @@ npm run dev          # Start the API in watch mode
 npm run lint         # Type-aware ESLint
 npm run format:check # Prettier validation
 npm run build        # TypeScript compilation
-npm test             # Jest (unit + e2e)
+npm test             # Poku (unit + integration)
 ```
 
-> The Jest suite connects to the MongoDB instance defined in `.env` and clears the `events` collection between runs.
+> The Poku suite connects to the MongoDB instance defined in `.env` and clears the `events` and `users` collections between runs.
+
+## Authentication System
+
+The backend includes a complete authentication system with:
+
+- **Basic Auth → JWT**: POST `/api/v1/auth/basic` - Basic authentication that returns JWT tokens
+- **JWT Authentication**: Bearer token validation for API access
+- **Session Authentication**: Cookie-based session management
+- **Protected CRUD**: All `/api/v1/eventos/*` endpoints require authentication
 
 ## Where to Go Next
 
