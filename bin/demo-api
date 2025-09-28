@@ -74,10 +74,14 @@ show_header() {
 demo_api_workflow() {
     demo_file="demo-output-$(date +%Y%m%d-%H%M%S).txt"
     base_url="http://localhost:3030"
+    auth_endpoint="$base_url/api/v1/auth"
     events_endpoint="$base_url/api/v1/eventos"
     created_id=""
     primary_id=""
     secondary_id=""
+    jwt_token=""
+    demo_username="demo_user_$(date +%s)"
+    demo_password="DemoPass123!"
 
     if command_exists gum; then
         gum style --foreground $GREEN --bold "🎬 API Demo Recording Session"
@@ -198,60 +202,113 @@ demo_api_workflow() {
         "curl -s $base_url/health" \
         "Verify server is running and database connection status is reported"
 
-    demo_step "Initial State - List All Events" \
-        "curl -s $events_endpoint" \
-        "Check initial state - should be empty or show existing events"
+    # Authentication Demo Section
+    demo_step "Register New User" \
+        "curl -s -X POST -H 'Content-Type: application/json' -d '{\"username\":\"$demo_username\",\"password\":\"$demo_password\"}' $auth_endpoint/register" \
+        "Register a new user account for the demo"
 
-    demo_step "Create New Event" \
-        "curl -s -X POST -H 'Content-Type: application/json' -d '{\"nombre\":\"Demo Event\",\"cantidad\":250.50,\"fecha\":\"2024-01-15\",\"tipo\":\"ingreso\",\"descripcion\":\"Demo transaction for testing\"}' $events_endpoint" \
-        "Create a new financial event (income type)"
+    # Extract JWT token from registration response for later use
+    if echo "$response" | grep -q '"token"'; then
+        jwt_token=$(echo "$response" | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')
+    fi
+
+    demo_step "Login with JSON Body" \
+        "curl -s -X POST -H 'Content-Type: application/json' -d '{\"username\":\"$demo_username\",\"password\":\"$demo_password\"}' $auth_endpoint/login" \
+        "Standard login with username/password in JSON body"
+
+    # Update JWT token from login response
+    if echo "$response" | grep -q '"token"'; then
+        jwt_token=$(echo "$response" | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')
+    fi
+
+    demo_step "Basic Auth → JWT Token" \
+        "curl -s -X POST -u '$demo_username:$demo_password' $auth_endpoint/basic" \
+        "Get JWT token using Basic Authentication header"
+
+    # Update JWT token from basic auth response
+    if echo "$response" | grep -q '"token"'; then
+        jwt_token=$(echo "$response" | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')
+    fi
+
+    demo_step "Session Login" \
+        "curl -s -X POST -H 'Content-Type: application/json' -d '{\"username\":\"$demo_username\",\"password\":\"$demo_password\"}' -c cookies.txt $auth_endpoint/session/login" \
+        "Login with session cookies for browser-like authentication"
+
+    demo_step "Get User Profile (JWT)" \
+        "curl -s -H 'Authorization: Bearer $jwt_token' $auth_endpoint/profile" \
+        "Access protected profile endpoint using JWT token"
+
+    demo_step "Get User Profile (Session)" \
+        "curl -s -b cookies.txt $auth_endpoint/session/profile" \
+        "Access protected profile endpoint using session cookie"
+
+    demo_step "Get User Profile (Unified Endpoint - JWT)" \
+        "curl -s -H 'Authorization: Bearer $jwt_token' $auth_endpoint/me" \
+        "Access unified profile endpoint using JWT token"
+
+    demo_step "Get User Profile (Unified Endpoint - Session)" \
+        "curl -s -b cookies.txt $auth_endpoint/me" \
+        "Access unified profile endpoint using session cookie"
+
+    # Test protected endpoints - Events now require authentication
+    demo_step "Try Access Events Without Auth (Should Fail)" \
+        "curl -s -w '\\nHTTP Status: %{http_code}' $events_endpoint" \
+        "Attempt to access events without authentication - should return 401"
+
+    demo_step "List All Events (Authenticated with JWT)" \
+        "curl -s -H 'Authorization: Bearer $jwt_token' $events_endpoint" \
+        "Check initial state with authentication - should be empty or show existing events"
+
+    demo_step "Create New Event (JWT Auth)" \
+        "curl -s -X POST -H 'Content-Type: application/json' -H 'Authorization: Bearer $jwt_token' -d '{\"nombre\":\"Demo Event\",\"cantidad\":250.50,\"fecha\":\"2024-01-15\",\"tipo\":\"ingreso\",\"descripcion\":\"Demo transaction for testing\"}' $events_endpoint" \
+        "Create a new financial event (income type) using JWT authentication"
 
     if [ -n "$created_id" ]; then
         primary_id="$created_id"
 
         demo_step "List All Events (After Creation)" \
-            "curl -s $events_endpoint" \
+            "curl -s -H 'Authorization: Bearer $jwt_token' $events_endpoint" \
             "Verify the new event appears in the list"
 
         demo_step "Get Specific Event by ID" \
-            "curl -s $events_endpoint/$primary_id" \
+            "curl -s -H 'Authorization: Bearer $jwt_token' $events_endpoint/$primary_id" \
             "Retrieve the specific event we just created"
 
-        demo_step "Update Event" \
-            "curl -s -X PUT -H 'Content-Type: application/json' -d '{\"nombre\":\"Updated Demo Event\",\"cantidad\":300.75,\"descripcion\":\"Updated demo transaction\"}' $events_endpoint/$primary_id" \
-            "Update the event with new information"
+        demo_step "Update Event (Session Auth)" \
+            "curl -s -X PUT -H 'Content-Type: application/json' -b cookies.txt -d '{\"nombre\":\"Updated Demo Event\",\"cantidad\":300.75,\"descripcion\":\"Updated demo transaction\"}' $events_endpoint/$primary_id" \
+            "Update the event with new information using session authentication"
 
         demo_step "Verify Update" \
-            "curl -s $events_endpoint/$primary_id" \
+            "curl -s -H 'Authorization: Bearer $jwt_token' $events_endpoint/$primary_id" \
             "Check that the event was successfully updated"
 
         demo_step "Create Comparison Event" \
-            "curl -s -X POST -H 'Content-Type: application/json' -d '{\"nombre\":\"Comparison Event\",\"cantidad\":999,\"fecha\":\"2024-02-10\",\"tipo\":\"ingreso\"}' $events_endpoint" \
+            "curl -s -X POST -H 'Content-Type: application/json' -H 'Authorization: Bearer $jwt_token' -d '{\"nombre\":\"Comparison Event\",\"cantidad\":999,\"fecha\":\"2024-02-10\",\"tipo\":\"ingreso\"}' $events_endpoint" \
             "Create a second event to demonstrate sorting"
 
         # Extract secondary ID from response
         secondary_id=$(echo "$response" | sed -n 's/.*"id":"\([^"]*\)".*/\1/p')
 
         demo_step "List Events Sorted by Amount" \
-            "curl -s '$events_endpoint?sortBy=cantidad&sortOrder=desc'" \
+            "curl -s -H 'Authorization: Bearer $jwt_token' '$events_endpoint?sortBy=cantidad&sortOrder=desc'" \
             "Demonstrate sorting support via query parameters"
 
         demo_step "Filter Events by tipo=ingreso" \
-            "curl -s '$events_endpoint?tipo=ingreso'" \
+            "curl -s -H 'Authorization: Bearer $jwt_token' '$events_endpoint?tipo=ingreso'" \
             "Show filtering via query parameters"
 
         demo_step "Delete Event" \
-            "curl -s -X DELETE -w 'HTTP Status: %{http_code}' $events_endpoint/$primary_id" \
+            "curl -s -X DELETE -H 'Authorization: Bearer $jwt_token' -w 'HTTP Status: %{http_code}' $events_endpoint/$primary_id" \
             "Delete the first demo event"
 
         if [ -n "$secondary_id" ]; then
             demo_step "Delete Comparison Event" \
-                "curl -s -X DELETE -w 'HTTP Status: %{http_code}' $events_endpoint/$secondary_id" \
+                "curl -s -X DELETE -H 'Authorization: Bearer $jwt_token' -w 'HTTP Status: %{http_code}' $events_endpoint/$secondary_id" \
                 "Delete the comparison event"
         fi
 
         demo_step "Verify Deletion" \
-            "curl -s $events_endpoint" \
+            "curl -s -H 'Authorization: Bearer $jwt_token' $events_endpoint" \
             "Confirm the event was removed from the list"
     else
         log_error "Could not extract created event ID, skipping individual event operations"
@@ -259,20 +316,41 @@ demo_api_workflow() {
 
     # Test error handling
     demo_step "Test Validation Error" \
-        "curl -s -X POST -H 'Content-Type: application/json' -d '{}' -w '\\nHTTP Status: %{http_code}' $events_endpoint" \
+        "curl -s -X POST -H 'Content-Type: application/json' -H 'Authorization: Bearer $jwt_token' -d '{}' -w '\\nHTTP Status: %{http_code}' $events_endpoint" \
         "Test API validation with invalid data"
 
     missing_id=${primary_id:-invalid-id}
     demo_step "Test Not Found Error" \
-        "curl -s -w '\\nHTTP Status: %{http_code}' $events_endpoint/$missing_id" \
+        "curl -s -H 'Authorization: Bearer $jwt_token' -w '\\nHTTP Status: %{http_code}' $events_endpoint/$missing_id" \
         "Test 404 error with non-existent event ID"
 
-    # Cleanup server
+    # Test authentication errors
+    demo_step "Test Invalid JWT Token" \
+        "curl -s -H 'Authorization: Bearer invalid-token' -w '\\nHTTP Status: %{http_code}' $events_endpoint" \
+        "Test authentication error with invalid JWT token"
+
+    demo_step "Test Duplicate User Registration" \
+        "curl -s -X POST -H 'Content-Type: application/json' -d '{\"username\":\"$demo_username\",\"password\":\"$demo_password\"}' -w '\\nHTTP Status: %{http_code}' $auth_endpoint/register" \
+        "Test user registration with existing username - should return 409"
+
+    # Logout and cleanup
+    demo_step "Session Logout" \
+        "curl -s -X POST -b cookies.txt $auth_endpoint/logout" \
+        "Logout from session - clears server-side session"
+
+    demo_step "Test Profile Access After Logout" \
+        "curl -s -b cookies.txt -w '\\nHTTP Status: %{http_code}' $auth_endpoint/session/profile" \
+        "Verify session is invalidated after logout - should return 401"
+
+    # Cleanup
     if [ -n "$SERVER_PID" ]; then
         kill $SERVER_PID 2>/dev/null || true
         wait $SERVER_PID 2>/dev/null || true
         log_info "Server stopped"
     fi
+
+    # Remove temporary files
+    rm -f cookies.txt 2>/dev/null || true
 
     # Final summary
     {
@@ -330,8 +408,8 @@ main() {
     demo_api_workflow
 }
 
-# Trap to cleanup background processes
-trap 'if [ -n "$SERVER_PID" ]; then kill $SERVER_PID 2>/dev/null || true; fi' EXIT INT TERM
+# Trap to cleanup background processes and temporary files
+trap 'if [ -n "$SERVER_PID" ]; then kill $SERVER_PID 2>/dev/null || true; fi; rm -f cookies.txt 2>/dev/null || true' EXIT INT TERM
 
 # Run main function
 main "$@"
