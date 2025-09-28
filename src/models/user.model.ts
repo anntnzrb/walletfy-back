@@ -43,12 +43,11 @@ userSchema.pre('save', async function (next) {
   }
 
   const saltRounds = 10;
-  this.password = await bcrypt.hash(this.password, saltRounds);
+  this.password = await bcrypt.hash(this.password as string, saltRounds);
   next();
 });
 
-// Add indexes for optimal query performance
-userSchema.index({ username: 1 });
+// Index on username is automatically created by unique: true in schema
 
 const resolveModel = (): Model<User> => {
   return (
